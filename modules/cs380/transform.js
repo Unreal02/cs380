@@ -1,8 +1,8 @@
 import { mat3, mat4, vec3, quat } from "./gl-matrix.js";
 export class Transform {
   constructor() {
-    this._localMatrix = mat4.create();
-    this._worldMatrix = mat4.create();
+    this._m1 = mat4.create();
+    this._m2 = mat4.create();
 
     this.localPosition = vec3.create();
     this.localRotation = quat.create();
@@ -19,17 +19,17 @@ export class Transform {
 
   get localMatrix() {
     mat4.fromRotationTranslationScale(
-      this._localMatrix,
+      this._m1,
       this.localRotation,
       this.localPosition,
       this.localScale
     );
-    return this._localMatrix;
+    return this._m1;
   }
 
   get worldMatrix() {
     mat4.fromRotationTranslationScale(
-      this._worldMatrix,
+      this._m2,
       this.localRotation,
       this.localPosition,
       this.localScale
@@ -37,7 +37,7 @@ export class Transform {
 
     // TODO: Implement hierarchical frames
 
-    return this._worldMatrix;
+    return this._m2;
   }
 
   clone() {
