@@ -12,13 +12,13 @@ export default class Lab2App extends cs380.BaseApp {
     this.camera = new cs380.Camera();
     vec3.set(this.camera.transform.localPosition, 0, 0, 0);
     mat4.ortho(
-        this.camera.projectionMatrix,
-        -2 * aspectRatio,
-        +2 * aspectRatio,
-        -2,
-        +2,
-        -2,
-        +2
+      this.camera.projectionMatrix,
+      -2 * aspectRatio,
+      +2 * aspectRatio,
+      -2,
+      +2,
+      -2,
+      +2
     );
 
     this.mesh = new cs380.Mesh();
@@ -26,12 +26,31 @@ export default class Lab2App extends cs380.BaseApp {
     const buildStar = (N, innerRadius) => {
       this.mesh.finalize();
       this.mesh.addAttribute(3); // position
-      
+
       // TODO: complete the function
+      this.mesh.addVertexData(0, 0, 0);
+      for (let i = 0; i < N; i++) {
+        const angle1 = 2 * Math.PI * i / N;
+        const angle2 = 2 * Math.PI * (i + 0.5) / N;
+        const p1 = vec3.fromValues(
+          Math.cos(angle1),
+          Math.sin(angle1),
+          0
+        );
+        const p2 = vec3.fromValues(
+          innerRadius * Math.cos(angle2),
+          innerRadius * Math.sin(angle2),
+          0
+        );
+        this.mesh.addVertexData(p1[0], p1[1], p1[2]);
+        this.mesh.addVertexData(p2[0], p2[1], p2[2]);
+      }
+      this.mesh.addVertexData(1, 0, 0);
+      this.mesh.drawMode = gl.TRIANGLE_FAN;
 
       this.mesh.initialize();
     };
-    
+
     buildStar(5, 0.5);
 
     this.shader = await cs380.buildShader(SolidShader);
@@ -79,6 +98,10 @@ export default class Lab2App extends cs380.BaseApp {
 
   update(elapsed, dt) {
     // TODO: Add orbiting animation for the star
+    const orbitSpeed = 0.3;
+    const rotateSpeed = -0.3;
+    vec3.set(this.star.transform.localPosition, Math.cos(elapsed * orbitSpeed * 2 * Math.PI), Math.sin(elapsed * orbitSpeed * 2 * Math.PI), 0);
+    quat.rotateZ(this.star.transform.localRotation, quat.create(), elapsed * rotateSpeed * 2 * Math.PI);
 
     // Clear canvas
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
