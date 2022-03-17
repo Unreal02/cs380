@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>2022 Spring CS380 Project</title>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Cache-Control"
+      content="no-cache, no-store, must-revalidate"
+    />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <link rel="stylesheet" href="./webgl.css" type="text/css" />
+    <script
+      src="https://unpkg.com/gl-matrix@3.4.3/gl-matrix-min.js"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/webgl-obj-loader@2.0.8/dist/webgl-obj-loader.min.js"
+      integrity="sha256-y5KHXaT6GeueInIDZFF8gRL60of3F/6bFoZ8Baq68kQ="
+      crossorigin="anonymous"
+    ></script>
+    <script type="module" src="main.js" defer></script>
+  </head>
+
+  <body>
+    <div id="app-settings">
+      <label for="app-selection">Select app</label>
+      <select id="app-selection"></select>
+    </div>
+    <canvas id="glcanvas" width="800" height="800"></canvas>
+    <div id="settings"></div>
+  </body>
+</html>
