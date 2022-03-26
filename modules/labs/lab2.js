@@ -92,7 +92,7 @@ export default class Lab2App extends cs380.BaseApp {
   }
 
   finalize() {
-    this.mesh.finalize()
+    this.mesh.finalize();
     this.shader.finalize();
   }
 
