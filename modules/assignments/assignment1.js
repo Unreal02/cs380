@@ -62,42 +62,39 @@ export default class Assignment1 extends cs380.BaseApp {
     document.getElementById("settings").innerHTML = `
       <div>
       <label for="settings-tree-level">Tree level</label>
-      <input type="range" id="settings-tree-level" value="10" min="1" max="12" step="1">
+      <input type="number" id="settings-tree-level" value="10" min="1" max="12" step="1">
       </div>
     `;
   }
 
   drawTree(n, theta, p1, p2) {
-    const vecAdd = (v1, v2) => {
-      return vec3.fromValues(v1[0] + v2[0], v1[1] + v2[1], v1[2] + v2[2]);
-    };
-    const vecSub = (v1, v2) => {
-      return vec3.fromValues(v1[0] - v2[0], v1[1] - v2[1], v1[2] - v2[2]);
-    };
-    const vecMul = (v, k) => {
-      return vec3.fromValues(v[0] * k, v[1] * k, v[2] * k);
-    };
-    const vecLen = (v) => {
-      return Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
-    };
-    const vecNormalize = (v) => {
-      if (vecLen(v) == 0) return v;
-      return vecMul(v, 1 / vecLen(v));
-    };
     const _drawTree = (n, theta, p1, p2) => {
       if (n <= 0) return;
-      const v12 = vecSub(p2, p1);
-      const v23 = vecMul(vec3.fromValues(-v12[1], v12[0], v12[2]), 3);
-      const len = vecLen(v12);
-      const vx = vecNormalize(v12);
-      const vy = vecNormalize(v23);
-      const p3 = vecAdd(p2, v23);
-      const p4 = vecAdd(p1, v23);
-      const p5 = vecAdd(
+      var p3 = vec3.create();
+      var p4 = vec3.create();
+      var p5 = vec3.create();
+      var v12 = vec3.create();
+      var v23 = vec3.create();
+      var vx = vec3.create();
+      var vy = vec3.create();
+      vec3.sub(v12, p2, p1);
+      vec3.scale(v23, vec3.fromValues(-v12[1], v12[0], v12[2]), 3);
+      const len = vec3.len(v12);
+      vec3.normalize(vx, v12);
+      vec3.normalize(vy, v23);
+      vec3.add(p3, p2, v23);
+      vec3.add(p4, p1, v23);
+      vec3.add(
+        p5,
         p4,
-        vecAdd(
-          vecMul(vx, len * Math.cos(theta) * Math.cos(theta)),
-          vecMul(vy, len * Math.cos(theta) * Math.sin(theta))
+        vec3.add(
+          vec3.create(),
+          vec3.scale(
+            vec3.create(),
+            vx,
+            len * Math.cos(theta) * Math.cos(theta)
+          ),
+          vec3.scale(vec3.create(), vy, len * Math.cos(theta) * Math.sin(theta))
         )
       );
       this.treeMesh.addVertexData(...p1, ...p2, ...p3);
