@@ -30,13 +30,9 @@ export default class Lab2App extends cs380.BaseApp {
       // TODO: complete the function
       this.mesh.addVertexData(0, 0, 0);
       for (let i = 0; i < N; i++) {
-        const angle1 = 2 * Math.PI * i / N;
-        const angle2 = 2 * Math.PI * (i + 0.5) / N;
-        const p1 = vec3.fromValues(
-          Math.cos(angle1),
-          Math.sin(angle1),
-          0
-        );
+        const angle1 = (2 * Math.PI * i) / N;
+        const angle2 = (2 * Math.PI * (i + 0.5)) / N;
+        const p1 = vec3.fromValues(Math.cos(angle1), Math.sin(angle1), 0);
         const p2 = vec3.fromValues(
           innerRadius * Math.cos(angle2),
           innerRadius * Math.sin(angle2),
@@ -74,17 +70,29 @@ export default class Lab2App extends cs380.BaseApp {
       </div>
     `;
 
-    cs380.utils.setInputBehavior("settings-sides", (val) => {
-      const N = parseInt(val);
-      const r = parseFloat(document.getElementById("settings-inner-radius").value);
-      buildStar(N, r);
-    }, true, false);
+    cs380.utils.setInputBehavior(
+      "settings-sides",
+      (val) => {
+        const N = parseInt(val);
+        const r = parseFloat(
+          document.getElementById("settings-inner-radius").value
+        );
+        buildStar(N, r);
+      },
+      true,
+      false
+    );
 
-    cs380.utils.setInputBehavior("settings-inner-radius", (val) => {
-      const N = parseInt(document.getElementById("settings-sides").value);
-      const r = parseFloat(val);
-      buildStar(N, r);
-    }, false, false);
+    cs380.utils.setInputBehavior(
+      "settings-inner-radius",
+      (val) => {
+        const N = parseInt(document.getElementById("settings-sides").value);
+        const r = parseFloat(val);
+        buildStar(N, r);
+      },
+      false,
+      false
+    );
 
     cs380.utils.setInputBehavior("settings-color", (val) =>
       cs380.utils.hexToRGB(this.star.uniforms.mainColor, val)
@@ -100,8 +108,17 @@ export default class Lab2App extends cs380.BaseApp {
     // TODO: Add orbiting animation for the star
     const orbitSpeed = 0.3;
     const rotateSpeed = -0.3;
-    vec3.set(this.star.transform.localPosition, Math.cos(elapsed * orbitSpeed * 2 * Math.PI), Math.sin(elapsed * orbitSpeed * 2 * Math.PI), 0);
-    quat.rotateZ(this.star.transform.localRotation, quat.create(), elapsed * rotateSpeed * 2 * Math.PI);
+    vec3.set(
+      this.star.transform.localPosition,
+      Math.cos(elapsed * orbitSpeed * 2 * Math.PI),
+      Math.sin(elapsed * orbitSpeed * 2 * Math.PI),
+      0
+    );
+    quat.rotateZ(
+      this.star.transform.localRotation,
+      quat.create(),
+      elapsed * rotateSpeed * 2 * Math.PI
+    );
 
     // Clear canvas
     gl.clearColor(0.0, 0.0, 0.0, 1.0);

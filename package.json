@@ -1,0 +1,19 @@
+{
+  "name": "cs380",
+  "version": "1.0.0",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Unreal02/cs380.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Unreal02/cs380/issues"
+  },
+  "homepage": "https://github.com/Unreal02/cs380#readme",
+  "description": ""
+}

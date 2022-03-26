@@ -34,11 +34,12 @@ export default class EmptyApp extends cs380.BaseApp {
     this.mesh = new cs380.Mesh();
     this.mesh.addAttribute(3); // position
     this.mesh.addAttribute(3); // color
-    this.mesh.addVertexData(
-      0, 1, 0, 1, 0, 0,
-      -1, 0, 0, 0, 1, 0,
-      1, 0, 0, 0, 0, 1
-    );
+    this.mesh.addVertexData(0, 1, 0);
+    this.mesh.addVertexData(1, 0, 0);
+    this.mesh.addVertexData(-1, 0, 0);
+    this.mesh.addVertexData(0, 1, 0);
+    this.mesh.addVertexData(1, 0, 0);
+    this.mesh.addVertexData(0, 0, 1);
     this.mesh.initialize();
 
     this.shader = await cs380.buildShader(VertexColorShader);
