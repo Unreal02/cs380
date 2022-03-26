@@ -96,8 +96,8 @@ export default class Assignment1 extends cs380.BaseApp {
       this.treeMesh.initialize();
     };
 
-    this.point1 = vec3.fromValues(1, -2, 0);
-    this.point2 = vec3.fromValues(1.4, -1.9, 0);
+    this.point1 = vec3.fromValues(1, -2.1, 0);
+    this.point2 = vec3.fromValues(1.4, -2, 0);
     this.drawTree(5, Math.PI / 4, this.point1, this.point2);
 
     this.vcShader = await cs380.buildShader(VertexColorShader);
@@ -126,7 +126,7 @@ export default class Assignment1 extends cs380.BaseApp {
 
   update(elapsed, dt) {
     // Updates before rendering here
-    // tree angle은 sin 함수 형태, 범위는 30도 ~ 60도
+    // tree angle은 sin 함수 형태, 범위는 45도~90도=0도~45도
     var angle = (Math.sin(elapsed) * Math.PI) / 4;
     if (angle < 0) angle += Math.PI / 2;
     this.drawTree(
