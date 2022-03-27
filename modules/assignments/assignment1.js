@@ -49,6 +49,9 @@ export default class Assignment1 extends cs380.BaseApp {
     this.point1 = vec3.fromValues(1, -2.1, 0);
     this.point2 = vec3.fromValues(1.4, -2, 0);
 
+    // dragon flake; drawDragon method
+    this.dragonMesh = new cs380.Mesh();
+
     // shader
     this.vcShader = await cs380.buildShader(VertexColorShader);
     this.sShader = await cs380.buildShader(SolidShader);
@@ -57,14 +60,24 @@ export default class Assignment1 extends cs380.BaseApp {
     this.background = new cs380.RenderObject(this.bgMesh, this.vcShader);
     this.tree = new cs380.RenderObject(this.treeMesh, this.sShader);
     this.tree.uniforms.mainColor = vec3.fromValues(1, 1, 1);
+    this.dragon = new cs380.RenderObject(this.dragonMesh, this.vcShader);
 
     // HTML interaction
     document.getElementById("settings").innerHTML = `
       <div>
-      <label for="settings-tree-level">Tree level</label>
-      <input type="number" id="settings-tree-level" value="10" min="1" max="12" step="1">
+      <label for="settings-tree-level">Tree level (~15)</label>
+      <input type="number" id="settings-tree-level" value="12" min="1" max="15" step="1">
+      </div>
+      <div>
+      <label for="settings-dragon-flake-level">Dragon flake level (~18)</label>
+      <input type="number" id="settings-dragon-flake-level" value="12" min="1" max="18" step="1">
       </div>
     `;
+
+    // dragon flake의 level이 바뀔 때
+    cs380.utils.setInputBehavior("settings-dragon-flake-level", (val) => {
+      this.drawDragon(val, vec3.fromValues(0, 0, 0), 0.7);
+    });
   }
 
   drawTree(n, theta, p1, p2) {
@@ -79,7 +92,7 @@ export default class Assignment1 extends cs380.BaseApp {
       var vy = vec3.create();
       vec3.sub(v12, p2, p1);
       vec3.scale(v23, vec3.fromValues(-v12[1], v12[0], v12[2]), 3);
-      const len = vec3.len(v12);
+      var len = vec3.len(v12);
       vec3.normalize(vx, v12);
       vec3.normalize(vy, v23);
       vec3.add(p3, p2, v23);
@@ -111,6 +124,95 @@ export default class Assignment1 extends cs380.BaseApp {
     this.treeMesh.initialize();
   }
 
+  drawDragon(n, pos, size) {
+    const _drawDragon = (n, pos, segmentLength, dir) => {
+      const getRotateList = (n) => {
+        //  1: 왼쪽으로 꺾음
+        // -1: 오른쪽으로 꺾음
+        if (n == 0) return [];
+        if (n == 1) return [1];
+        var list1 = getRotateList(n - 1);
+        var list2 = list1
+          .map((n) => {
+            return -n;
+          })
+          .reverse();
+        return [...list1, 1, ...list2];
+      };
+      const dir2vec = (dir) => {
+        switch (dir) {
+          case 0: // 우
+            return vx;
+          case 1: // 상
+            return vy;
+          case 2: // 좌
+            return vec3.scale(vec3.create(), vx, -1);
+          case 3: // 하
+            return vec3.scale(vec3.create(), vy, -1);
+        }
+      };
+
+      var colorVal = (dir % 2) * 0.02;
+      var color = vec3.fromValues(colorVal, colorVal, colorVal);
+      var vxt = vec3.fromValues(1, 0, 0);
+      var vyt = vec3.fromValues(0, 1, 0);
+      var vx = vec3.create();
+      var vy = vec3.create();
+      vec3.scale(vx, vxt, segmentLength);
+      vec3.scale(vy, vyt, segmentLength);
+
+      var rotateList = getRotateList(n);
+      var pointList = [];
+
+      // rotateList의 값대로 선분을 돌려가면서 pointList 채우기
+      pointList.push(pos);
+      pos = vec3.add(vec3.create(), pos, dir2vec(dir));
+      pointList.push(pos);
+      for (var rotate of rotateList) {
+        dir += rotate;
+        if (dir < 0) dir += 4;
+        if (dir >= 4) dir -= 4;
+        pos = vec3.add(vec3.create(), pos, dir2vec(dir));
+        pointList.push(pos);
+      }
+
+      // 삼각형들 그리기
+      for (var i = 2; i < pointList.length; i += 2) {
+        var p1 = pointList[i - 2];
+        var p2 = pointList[i - 1];
+        var p3 = pointList[i];
+        var p4 = vec3.create(); // p1, p2, p3, p4로 정사각형 구성
+        var middle = vec3.create();
+        vec3.scale(middle, vec3.add(vec3.create(), p1, p3), 0.5);
+        vec3.add(p4, middle, vec3.sub(vec3.create(), middle, p2));
+        this.dragonMesh.addVertexData(
+          ...p1,
+          ...color,
+          ...p2,
+          ...color,
+          ...p3,
+          ...color
+        );
+        this.dragonMesh.addVertexData(
+          ...p1,
+          ...color,
+          ...p3,
+          ...color,
+          ...p4,
+          ...color
+        );
+      }
+    };
+
+    this.dragonMesh.finalize();
+    this.dragonMesh.addAttribute(3); // position
+    this.dragonMesh.addAttribute(3); // color
+    for (var i = 0; i < 4; i++)
+      _drawDragon(n, pos, size * Math.pow(0.67, n - 1), i);
+    this.dragonMesh.drawMode = gl.TRIANGLES;
+    this.dragonMesh.initialize();
+  }
+
   finalize() {
     // Finalize WebGL objects (mesh, shader, texture, ...)
     this.bgMesh.finalize();
@@ -131,6 +233,9 @@ export default class Assignment1 extends cs380.BaseApp {
       this.point2
     );
 
+    // dragon flake
+    quat.rotateZ(this.dragon.transform.localRotation, quat.create(), elapsed);
+
     // Clear canvas
     gl.clearDepth(1.0);
     gl.enable(gl.DEPTH_TEST);
@@ -140,5 +245,6 @@ export default class Assignment1 extends cs380.BaseApp {
     // Rest of rendering below
     this.background.render(this.camera);
     this.tree.render(this.camera);
+    this.dragon.render(this.camera);
   }
 }
