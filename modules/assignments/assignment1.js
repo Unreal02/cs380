@@ -21,16 +21,6 @@ export default class Assignment1 extends cs380.BaseApp {
       +2
     );
 
-    document.getElementById("settings").innerHTML = `
-      <h3>Basic requirements</h3>
-      <ul>
-        <li>Add a background with color gradient</li>
-        <li>Add 2 or more types of fractal-like natural objects</li>
-        <li>Add framerate-independent natural animation</li>
-        <li>Show some creativity in your scene</li>
-      </ul>
-    `;
-
     // Rest of initialization below
 
     // background
@@ -50,7 +40,8 @@ export default class Assignment1 extends cs380.BaseApp {
     this.point2 = vec3.fromValues(1.4, -2, 0);
 
     // dragon flake; drawDragon method
-    this.dragonMesh = new cs380.Mesh();
+    this.dragonMeshes = [];
+    for (var i = 0; i < 5; i++) this.dragonMeshes.push(new cs380.Mesh());
 
     // shader
     this.vcShader = await cs380.buildShader(VertexColorShader);
@@ -60,7 +51,11 @@ export default class Assignment1 extends cs380.BaseApp {
     this.background = new cs380.RenderObject(this.bgMesh, this.vcShader);
     this.tree = new cs380.RenderObject(this.treeMesh, this.sShader);
     this.tree.uniforms.mainColor = vec3.fromValues(1, 1, 1);
-    this.dragon = new cs380.RenderObject(this.dragonMesh, this.vcShader);
+    this.dragons = [];
+    for (var i in this.dragonMeshes)
+      this.dragons.push(
+        new cs380.RenderObject(this.dragonMeshes[i], this.vcShader)
+      );
 
     // HTML interaction
     document.getElementById("settings").innerHTML = `
@@ -72,12 +67,41 @@ export default class Assignment1 extends cs380.BaseApp {
       <label for="settings-dragon-flake-level">Dragon flake level (~18)</label>
       <input type="number" id="settings-dragon-flake-level" value="12" min="1" max="18" step="1">
       </div>
+      <div>
+      <label for="settings-dragon-flake-size">Dragon flake size (0.1~1)</label>
+      <input type="range" id="settings-dragon-flake-size" value="0.4" min="0.1" max="1" step="any">
+      </div>
     `;
 
     // dragon flake의 level이 바뀔 때
     cs380.utils.setInputBehavior("settings-dragon-flake-level", (val) => {
-      this.drawDragon(val, vec3.fromValues(0, 0, 0), 0.7);
+      for (var i = 0; i < 5; i++)
+        this.drawDragon(
+          i,
+          val,
+          vec3.fromValues(0, 0, 0),
+          parseFloat(
+            document.getElementById("settings-dragon-flake-size").value
+          )
+        );
     });
+
+    // dragon flake의 size가 바뀔 때
+    cs380.utils.setInputBehavior(
+      "settings-dragon-flake-size",
+      (val) => {
+        for (var i = 0; i < 5; i++)
+          this.drawDragon(
+            i,
+            parseInt(
+              document.getElementById("settings-dragon-flake-level").value
+            ),
+            vec3.fromValues(0, 0, 0),
+            parseFloat(val)
+          );
+      },
+      true
+    );
   }
 
   drawTree(n, theta, p1, p2) {
@@ -124,7 +148,7 @@ export default class Assignment1 extends cs380.BaseApp {
     this.treeMesh.initialize();
   }
 
-  drawDragon(n, pos, size) {
+  drawDragon(idx, n, pos, size) {
     const _drawDragon = (n, pos, segmentLength, dir) => {
       const getRotateList = (n) => {
         //  1: 왼쪽으로 꺾음
@@ -185,7 +209,7 @@ export default class Assignment1 extends cs380.BaseApp {
         var middle = vec3.create();
         vec3.scale(middle, vec3.add(vec3.create(), p1, p3), 0.5);
         vec3.add(p4, middle, vec3.sub(vec3.create(), middle, p2));
-        this.dragonMesh.addVertexData(
+        this.dragonMeshes[idx].addVertexData(
           ...p1,
           ...color,
           ...p2,
@@ -193,7 +217,7 @@ export default class Assignment1 extends cs380.BaseApp {
           ...p3,
           ...color
         );
-        this.dragonMesh.addVertexData(
+        this.dragonMeshes[idx].addVertexData(
           ...p1,
           ...color,
           ...p3,
@@ -204,13 +228,13 @@ export default class Assignment1 extends cs380.BaseApp {
       }
     };
 
-    this.dragonMesh.finalize();
-    this.dragonMesh.addAttribute(3); // position
-    this.dragonMesh.addAttribute(3); // color
+    this.dragonMeshes[idx].finalize();
+    this.dragonMeshes[idx].addAttribute(3); // position
+    this.dragonMeshes[idx].addAttribute(3); // color
     for (var i = 0; i < 4; i++)
       _drawDragon(n, pos, size * Math.pow(0.67, n - 1), i);
-    this.dragonMesh.drawMode = gl.TRIANGLES;
-    this.dragonMesh.initialize();
+    this.dragonMeshes[idx].drawMode = gl.TRIANGLES;
+    this.dragonMeshes[idx].initialize();
   }
 
   finalize() {
@@ -234,7 +258,22 @@ export default class Assignment1 extends cs380.BaseApp {
     );
 
     // dragon flake
-    quat.rotateZ(this.dragon.transform.localRotation, quat.create(), elapsed);
+    for (var i = 0; i < 5; i++) {
+      var y = elapsed + 3.6 * i;
+      var dx = -Math.sin(elapsed) * 0.4;
+      while (y >= 6) y -= 6;
+      vec3.set(
+        this.dragons[i].transform.localPosition,
+        0.8 * i - 1.6 + dx,
+        3 - y,
+        0
+      );
+      quat.rotateZ(
+        this.dragons[i].transform.localRotation,
+        quat.create(),
+        elapsed
+      );
+    }
 
     // Clear canvas
     gl.clearDepth(1.0);
@@ -245,6 +284,6 @@ export default class Assignment1 extends cs380.BaseApp {
     // Rest of rendering below
     this.background.render(this.camera);
     this.tree.render(this.camera);
-    this.dragon.render(this.camera);
+    for (var i = 0; i < 5; i++) this.dragons[i].render(this.camera);
   }
 }
