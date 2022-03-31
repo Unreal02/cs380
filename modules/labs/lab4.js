@@ -1,5 +1,5 @@
 import gl from "../gl.js";
-import { vec3, mat4, quat, glMatrix } from "../cs380/gl-matrix.js";
+import { vec3, mat4, quat, glMatrix, vec2 } from "../cs380/gl-matrix.js";
 
 import * as cs380 from "../cs380/cs380.js";
 
@@ -46,6 +46,19 @@ export default class Lab4App extends cs380.BaseApp {
       pickingShader,
       1
     );
+    this.cube = new cs380.PickableObject(
+      cubeMesh,
+      simpleShader,
+      pickingShader,
+      2
+    );
+    this.sphere.transform.localPosition = [1, 1, 0];
+    this.cube.transform.localPosition = [-1, -1, 0];
+    quat.setAxisAngle(
+      this.cube.transform.localRotation,
+      vec3.normalize(vec3.create(), vec3.fromValues(1, 1, 0)),
+      Math.PI / 4
+    );
 
     // TODO : add your own transformations for sphere and cube
 
@@ -81,6 +94,20 @@ export default class Lab4App extends cs380.BaseApp {
   onKeyDown(key) {
     // TODO : write down your transformation code
     console.log(`key down: ${key}`);
+    if (key == "s") this.sphere.transform.localScale = [1.5, 0.7, 1];
+    else if (key == "ArrowUp") {
+      const pos = this.cube.transform.localPosition;
+      vec3.add(this.cube.transform.localPosition, pos, [0, 0.2, 0]);
+    } else if (key == "ArrowDown") {
+      const pos = this.cube.transform.localPosition;
+      vec3.add(this.cube.transform.localPosition, pos, [0, -0.2, 0]);
+    } else if (key == "ArrowLeft") {
+      const pos = this.cube.transform.localPosition;
+      vec3.add(this.cube.transform.localPosition, pos, [-0.2, 0, 0]);
+    } else if (key == "ArrowRight") {
+      const pos = this.cube.transform.localPosition;
+      vec3.add(this.cube.transform.localPosition, pos, [0.2, 0, 0]);
+    }
   }
 
   onMouseDown(e) {
@@ -93,6 +120,17 @@ export default class Lab4App extends cs380.BaseApp {
 
     // TODO : write down your transformation code
     console.log(`onMouseDown() got index ${index}`);
+
+    if (index == 1) {
+      quat.setAxisAngle(
+        this.sphere.transform.localRotation,
+        vec3.normalize(vec3.create(), vec3.fromValues(0.2, 0.2, 1)),
+        Math.PI / 6
+      );
+    } else if (index == 2) {
+      const scale = this.cube.transform.localScale;
+      vec3.add(this.cube.transform.localScale, scale, [0.2, 0.2, 0.2]);
+    }
   }
 
   finalize() {
@@ -112,6 +150,7 @@ export default class Lab4App extends cs380.BaseApp {
 
     // TODO : call renderPicking() for the PickableObject
     this.sphere.renderPicking(this.camera);
+    this.cube.renderPicking(this.camera);
 
     // 2. Render real scene
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -122,5 +161,6 @@ export default class Lab4App extends cs380.BaseApp {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     this.sphere.render(this.camera);
+    this.cube.render(this.camera);
   }
 }
