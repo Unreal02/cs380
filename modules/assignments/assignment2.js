@@ -96,6 +96,7 @@ export default class Assignment2 extends cs380.BaseApp {
     // renderPicking() here
 
     // Render real scene
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clearDepth(1.0);
     gl.enable(gl.DEPTH_TEST);
