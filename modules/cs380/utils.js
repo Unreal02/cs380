@@ -17,10 +17,21 @@ export class SimpleOrbitControl {
     this.center = center ? center : vec3.clone(this.transform.localPosition);
     this.initializeState(center, this.transform);
 
-    gl.canvas.addEventListener("mousedown", this.onMouseDown());
-    document.addEventListener("mousemove", this.onMouseMove());
-    document.addEventListener("mouseup", this.onMouseUp());
-    gl.canvas.addEventListener("wheel", this.onWheel());
+    this.handleMouseDown = this.onMouseDown();
+    this.handleMouseMove = this.onMouseMove();
+    this.handleMouseUp = this.onMouseUp();
+    this.handleWheel = this.onWheel();
+    gl.canvas.addEventListener("mousedown", this.handleMouseDown);
+    document.addEventListener("mousemove", this.handleMouseMove);
+    document.addEventListener("mouseup", this.handleMouseUp);
+    gl.canvas.addEventListener("wheel", this.handleWheel);
+  }
+
+  finalize() {
+    gl.canvas.removeEventListener("mousedown", this.handleMouseDown);
+    document.removeEventListener("mousemove", this.handleMouseMove);
+    document.removeEventListener("mouseup", this.handleMouseUp);
+    gl.canvas.removeEventListener("wheel", this.handleWheel);
   }
 
   initializeState(center, tr) {
