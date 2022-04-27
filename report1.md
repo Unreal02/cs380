@@ -12,7 +12,7 @@ I made a background with color gradiant. I assigned colors for each corners of b
 
 Since the background is square, more than two triangles are needed. I decided to use two triangles.
 
-![img1](./pics/report1_1.png)
+![img1](./images/report1_1.png)
 
 - <span style="color: blue">p1</span>-<span style="color: red">p3</span>-<span style="color: green">p4</span>
 - <span style="color: blue">p1</span>-<span style="color: blue">p2</span>-<span style="color: green">p4</span>
@@ -23,7 +23,7 @@ My fractal tree starts with one stem. Two stems are created from end of previous
 
 One stem is consist of an rectangle and a right triangle. For a rectangle, length is 3 times longer than thickness. New stems are grown from other two sides of a triangle. The side of a triangle attached to a rectangle is a hypotenuse.
 
-![img2](./pics/report1_2.png)
+![img2](./images/report1_2.png)
 
 The angle of the triangle changes over time like sin function, and makes the tree's movement interesting. It seems that the stems are growing and shrinking repeatedly.
 
@@ -33,11 +33,11 @@ I used **dragon curve** for create snowflakes. (Because dragon curve is more vis
 
 Since dragon curve is originally **curves**, so it must be converted into **mesh**. I grouped every two line segments, and created a square from that two line segments.
 
-![img3](./pics/report1_3.png)
+![img3](./images/report1_3.png)
 
 I assigned different colors for each dragon curves in dragon flake, so the shape of dragon curve can be noticed.
 
-![img4](./pics/report1_4.png)
+![img4](./images/report1_4.png)
 
 I created five dragon flakes and made them fall. Dragon flakes are falling, rotating and swaying.
 
