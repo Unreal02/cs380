@@ -13,13 +13,7 @@ export default class Assignment2 extends cs380.BaseApp {
     const aspectRatio = width / height;
     this.camera = new cs380.Camera();
     vec3.set(this.camera.transform.localPosition, 0, 0, 5);
-    mat4.perspective(
-      this.camera.projectionMatrix,
-      glMatrix.toRadian(45),
-      aspectRatio,
-      0.01,
-      100
-    );
+    mat4.perspective(this.camera.projectionMatrix, glMatrix.toRadian(45), aspectRatio, 0.01, 100);
 
     // things to finalize()
     this.thingsToClear = [];
@@ -67,65 +61,51 @@ export default class Assignment2 extends cs380.BaseApp {
 
     // Avatar (pickable)
     this.avatarList = [];
+    const colorBlack = [0, 0, 0];
+    const colorPink = [223, 32, 175].map((i) => i / 255);
+    const colorSkin = [255, 227, 181].map((i) => i / 255);
+
+    // add avatar inner component
+    const addAvatarComponentInner = (innerName, name, mesh, innerPos, index, color = colorSkin) => {
+      this[innerName] = new cs380.PickableObject(mesh, simpleShader, pickingShader, index);
+      this[innerName].transform.localPosition = innerPos;
+      this[innerName].transform.setParent(this[name].transform);
+      this.avatarList.push(this[innerName]);
+      this[innerName].uniforms.mainColor = color;
+    };
 
     // add avatar component
-    const addAvatarComponent = (name, mesh, pos, innerPos, index, parent) => {
+    const addAvatarComponent = (name, mesh, pos, innerPos, index, parent, color) => {
       const m = new cs380.Mesh();
       this[name] = new cs380.RenderObject(m, simpleShader);
       this[name].transform.localPosition = pos;
       this[name].transform.setParent(parent.transform);
       this.thingsToClear.push(m);
 
-      const name0 = name + "0";
-      this[name0] = new cs380.PickableObject(mesh, simpleShader, pickingShader, index);
-      this[name0].transform.localPosition = innerPos;
-      this[name0].transform.setParent(this[name].transform);
-      this.avatarList.push(this[name0]);
+      const innerName = name + "0";
+      addAvatarComponentInner(innerName, name, mesh, innerPos, index, color);
     };
 
-    // body
+    // body mesh
     const bodyMesh = new cs380.Mesh();
-    this.thingsToClear.push(bodyMesh);
+    const body0Mesh = cs380.Mesh.fromData(cs380.primitives.generateCone(1, 4));
+    const body1Mesh = cs380.Mesh.fromData(cs380.primitives.generateCone(0.8, 3.2));
+    const body2Mesh = cs380.Mesh.fromData(cs380.primitives.generateCylinder(0.15, 1));
+    const body3Mesh = cs380.Mesh.fromData(cs380.primitives.generateSphere(0.8));
+    this.thingsToClear.push(bodyMesh, body0Mesh, body1Mesh, body2Mesh, body3Mesh);
+
+    // body
     this.body = new cs380.RenderObject(bodyMesh, simpleShader);
     this.body.transform.localPosition = [0, 0, -10];
-
-    // body0
-    const body0Mesh = cs380.Mesh.fromData(cs380.primitives.generateCone(1, 4));
-    this.thingsToClear.push(body0Mesh);
-    this.body0 = new cs380.PickableObject(body0Mesh, simpleShader, pickingShader, 1);
-    this.body0.transform.localPosition = [0, -0.5, 0];
+    addAvatarComponentInner("body0", "body", body0Mesh, [0, -0.5, 0], 1, colorBlack);
     this.body0.transform.localScale = [1, 1, 0.7];
-    this.body0.transform.setParent(this.body.transform);
-    this.avatarList.push(this.body0);
-
-    // body1
-    const body1Mesh = cs380.Mesh.fromData(cs380.primitives.generateCone(0.8, 3.2));
-    this.thingsToClear.push(body1Mesh);
-    this.body1 = new cs380.PickableObject(body1Mesh, simpleShader, pickingShader, 1);
-    this.body1.transform.localPosition = [0, 2.7, 0];
+    addAvatarComponentInner("body1", "body", body1Mesh, [0, 2.7, 0], 1, colorPink);
     this.body1.transform.localScale = [1, 1, 0.7];
     quat.rotateX(this.body1.transform.localRotation, quat.create(), Math.PI);
-    this.body1.transform.setParent(this.body.transform);
-    this.avatarList.push(this.body1);
-
-    // body2 (neck)
-    const body2Mesh = cs380.Mesh.fromData(cs380.primitives.generateCylinder(0.15, 1));
-    this.thingsToClear.push(body2Mesh);
-    this.body2 = new cs380.PickableObject(body2Mesh, simpleShader, pickingShader, 1);
-    this.body2.transform.localPosition = [0, 3, 0];
+    addAvatarComponentInner("body2", "body", body2Mesh, [0, 3, 0], 1);
     quat.rotateX(this.body2.transform.localRotation, quat.create(), Math.PI);
-    this.body2.transform.setParent(this.body.transform);
-    this.avatarList.push(this.body2);
-
-    // body3 (shoulder)
-    const body3Mesh = cs380.Mesh.fromData(cs380.primitives.generateSphere(0.8));
-    this.thingsToClear.push(body3Mesh);
-    this.body3 = new cs380.PickableObject(body3Mesh, simpleShader, pickingShader, 1);
-    this.body3.transform.localPosition = [0, 2.7, 0];
+    addAvatarComponentInner("body3", "body", body3Mesh, [0, 2.7, 0], 1, colorPink);
     this.body3.transform.localScale = [1, 0.3, 0.7];
-    quat.rotateX(this.body3.transform.localRotation, quat.create(), Math.PI);
-    this.body3.transform.setParent(this.body.transform);
-    this.avatarList.push(this.body3);
 
     // head
     const headMesh = cs380.Mesh.fromData(cs380.primitives.generateSphere(0.5));
@@ -135,7 +115,7 @@ export default class Assignment2 extends cs380.BaseApp {
 
     // leg and arm mesh
     const legMesh = cs380.Mesh.fromData(cs380.primitives.generateCapsule(0.25, 2));
-    const armMesh = cs380.Mesh.fromData(cs380.primitives.generateCapsule(0.12, 1.5));
+    const armMesh = cs380.Mesh.fromData(cs380.primitives.generateCapsule(0.12, 1.3));
     this.thingsToClear.push(legMesh, armMesh);
 
     // leg
@@ -145,12 +125,108 @@ export default class Assignment2 extends cs380.BaseApp {
     addAvatarComponent("legRD", legMesh, [0, -2, 0], [0, -1, 0], 6, this.legRU);
 
     // arm
-    addAvatarComponent("armLU", armMesh, [0.68, 2.7, 0], [0, -0.75, 0], 7, this.body);
-    addAvatarComponent("armRU", armMesh, [-0.68, 2.7, 0], [0, -0.75, 0], 8, this.body);
-    addAvatarComponent("armLD", armMesh, [0, -1, 0], [0, -0.75, 0], 9, this.armLU);
-    addAvatarComponent("armRD", armMesh, [0, -1, 0], [0, -0.75, 0], 10, this.armRU);
+    addAvatarComponent("armLU", armMesh, [0.68, 2.7, 0], [0, -0.65, 0], 7, this.body);
+    addAvatarComponent("armRU", armMesh, [-0.68, 2.7, 0], [0, -0.65, 0], 8, this.body);
+    addAvatarComponent("armLD", armMesh, [0, -1.3, 0], [0, -0.65, 0], 9, this.armLU);
+    addAvatarComponent("armRD", armMesh, [0, -1.3, 0], [0, -0.65, 0], 10, this.armRU);
     quat.rotateZ(this.armLU.transform.localRotation, quat.create(), Math.atan(0.25));
     quat.rotateZ(this.armRU.transform.localRotation, quat.create(), Math.atan(-0.25));
+
+    // hand and finger mesh
+    const handMesh0 = cs380.Mesh.fromData(cs380.primitives.generateCube(0.18, 0.15, 0.06));
+    const handMesh1 = cs380.Mesh.fromData(cs380.primitives.generateCylinder(0.03, 0.15));
+    const handMesh23 = cs380.Mesh.fromData(cs380.primitives.generateSphere(0.03));
+    const handMesh45 = cs380.Mesh.fromData(
+      cs380.primitives.generateCube(0.12 * 0.9578, 0.2 / 0.9578 + 0.06, 0.06)
+    );
+    const handMesh67 = cs380.Mesh.fromData(cs380.primitives.generateCylinder(0.03, 0.2 / 0.9578));
+    const fingerMesh3 = cs380.Mesh.fromData(cs380.primitives.generateCapsule(0.03, 0.12));
+    const fingerMesh4 = cs380.Mesh.fromData(cs380.primitives.generateCapsule(0.03, 0.1));
+    const fingerMesh5 = cs380.Mesh.fromData(cs380.primitives.generateCapsule(0.03, 0.08));
+    this.thingsToClear.push(
+      handMesh0,
+      handMesh1,
+      handMesh23,
+      handMesh45,
+      handMesh67,
+      fingerMesh3,
+      fingerMesh4,
+      fingerMesh5
+    );
+
+    // left hand
+    addAvatarComponent("handL", handMesh0, [0, -1.3, 0], [0.03, -0.275, 0], 11, this.armLD);
+    addAvatarComponentInner("handL1", "handL", handMesh1, [0.03 + 0.09, -0.275, 0], 11);
+    addAvatarComponentInner("handL2", "handL", handMesh1, [0.03 - 0.09, -0.275, 0], 11);
+    addAvatarComponentInner("handL3", "handL", handMesh23, [0.12, -0.2, 0], 11);
+    addAvatarComponentInner("handL4", "handL", handMesh45, [0.03, -0.1, 0], 11);
+    quat.rotateZ(this.handL4.transform.localRotation, quat.create(), Math.atan(0.3));
+    addAvatarComponentInner("handL5", "handL", handMesh45, [-0.03, -0.1, 0], 11);
+    quat.rotateZ(this.handL5.transform.localRotation, quat.create(), Math.atan(-0.3));
+    addAvatarComponentInner("handL6", "handL", handMesh67, [0.09, -0.1, 0], 11);
+    quat.rotateZ(this.handL6.transform.localRotation, quat.create(), Math.atan(0.3));
+    addAvatarComponentInner("handL7", "handL", handMesh67, [-0.09, -0.1, 0], 11);
+    quat.rotateZ(this.handL7.transform.localRotation, quat.create(), Math.atan(-0.3));
+    addAvatarComponent("fingerL10", fingerMesh4, [-0.12, -0.2, 0], [0, -0.05, 0], 11, this.handL);
+    addAvatarComponent("fingerL11", fingerMesh4, [0, -0.1, 0], [0, -0.05, 0], 11, this.fingerL10);
+    addAvatarComponent("fingerL20", fingerMesh4, [-0.06, -0.35, 0], [0, -0.05, 0], 11, this.handL);
+    addAvatarComponent("fingerL21", fingerMesh4, [0, -0.1, 0], [0, -0.05, 0], 11, this.fingerL20);
+    addAvatarComponent("fingerL22", fingerMesh4, [0, -0.1, 0], [0, -0.05, 0], 11, this.fingerL21);
+    addAvatarComponent("fingerL30", fingerMesh3, [0, -0.35, 0], [0, -0.06, 0], 11, this.handL);
+    addAvatarComponent("fingerL31", fingerMesh3, [0, -0.12, 0], [0, -0.06, 0], 11, this.fingerL30);
+    addAvatarComponent("fingerL32", fingerMesh3, [0, -0.12, 0], [0, -0.06, 0], 11, this.fingerL31);
+    addAvatarComponent("fingerL40", fingerMesh4, [0.06, -0.35, 0], [0, -0.05, 0], 11, this.handL);
+    addAvatarComponent("fingerL41", fingerMesh4, [0, -0.1, 0], [0, -0.05, 0], 11, this.fingerL40);
+    addAvatarComponent("fingerL42", fingerMesh4, [0, -0.1, 0], [0, -0.05, 0], 11, this.fingerL41);
+    addAvatarComponent("fingerL50", fingerMesh5, [0.12, -0.35, 0], [0, -0.04, 0], 11, this.handL);
+    addAvatarComponent("fingerL51", fingerMesh5, [0, -0.08, 0], [0, -0.04, 0], 11, this.fingerL50);
+    addAvatarComponent("fingerL52", fingerMesh5, [0, -0.08, 0], [0, -0.04, 0], 11, this.fingerL51);
+
+    // right hand
+    addAvatarComponent("handR", handMesh0, [0, -1.3, 0], [-0.03, -0.275, 0], 12, this.armRD);
+    addAvatarComponentInner("handR1", "handR", handMesh1, [-0.03 + 0.09, -0.275, 0], 12);
+    addAvatarComponentInner("handR2", "handR", handMesh1, [-0.03 - 0.09, -0.275, 0], 12);
+    addAvatarComponentInner("handR3", "handR", handMesh23, [-0.12, -0.2, 0], 12);
+    addAvatarComponentInner("handR4", "handR", handMesh45, [0.03, -0.1, 0], 12);
+    quat.rotateZ(this.handR4.transform.localRotation, quat.create(), Math.atan(0.3));
+    addAvatarComponentInner("handR5", "handR", handMesh45, [-0.03, -0.1, 0], 12);
+    quat.rotateZ(this.handR5.transform.localRotation, quat.create(), Math.atan(-0.3));
+    addAvatarComponentInner("handR6", "handR", handMesh67, [0.09, -0.1, 0], 12);
+    quat.rotateZ(this.handR6.transform.localRotation, quat.create(), Math.atan(0.3));
+    addAvatarComponentInner("handR7", "handR", handMesh67, [-0.09, -0.1, 0], 12);
+    quat.rotateZ(this.handR7.transform.localRotation, quat.create(), Math.atan(-0.3));
+    addAvatarComponent("fingerR10", fingerMesh4, [0.12, -0.2, 0], [0, -0.05, 0], 12, this.handR);
+    addAvatarComponent("fingerR11", fingerMesh4, [0, -0.1, 0], [0, -0.05, 0], 12, this.fingerR10);
+    addAvatarComponent("fingerR20", fingerMesh4, [0.06, -0.35, 0], [0, -0.05, 0], 12, this.handR);
+    addAvatarComponent("fingerR21", fingerMesh4, [0, -0.1, 0], [0, -0.05, 0], 12, this.fingerR20);
+    addAvatarComponent("fingerR22", fingerMesh4, [0, -0.1, 0], [0, -0.05, 0], 12, this.fingerR21);
+    addAvatarComponent("fingerR30", fingerMesh3, [0, -0.35, 0], [0, -0.06, 0], 12, this.handR);
+    addAvatarComponent("fingerR31", fingerMesh3, [0, -0.12, 0], [0, -0.06, 0], 12, this.fingerR30);
+    addAvatarComponent("fingerR32", fingerMesh3, [0, -0.12, 0], [0, -0.06, 0], 12, this.fingerR31);
+    addAvatarComponent("fingerR40", fingerMesh4, [-0.06, -0.35, 0], [0, -0.05, 0], 12, this.handR);
+    addAvatarComponent("fingerR41", fingerMesh4, [0, -0.1, 0], [0, -0.05, 0], 12, this.fingerR40);
+    addAvatarComponent("fingerR42", fingerMesh4, [0, -0.1, 0], [0, -0.05, 0], 12, this.fingerR41);
+    addAvatarComponent("fingerR50", fingerMesh5, [-0.12, -0.35, 0], [0, -0.04, 0], 12, this.handR);
+    addAvatarComponent("fingerR51", fingerMesh5, [0, -0.08, 0], [0, -0.04, 0], 12, this.fingerR50);
+    addAvatarComponent("fingerR52", fingerMesh5, [0, -0.08, 0], [0, -0.04, 0], 12, this.fingerR51);
+
+    // 포즈 연습
+    quat.rotateZ(this.armRU.transform.localRotation, quat.create(), -Math.PI / 2);
+    quat.rotateZ(this.armRD.transform.localRotation, quat.create(), -Math.PI / 2);
+    quat.rotateZ(this.armLU.transform.localRotation, quat.create(), 0);
+    quat.rotateX(this.armLU.transform.localRotation, quat.create(), -Math.PI / 6);
+    quat.rotateX(this.armLD.transform.localRotation, quat.create(), (-Math.PI / 6) * 4);
+    quat.rotateX(this.handL.transform.localRotation, quat.create(), -Math.PI / 6);
+    this.rotate(this.fingerL30, 90, 0, 0);
+    this.rotate(this.fingerL31, 90, 0, 0);
+    this.rotate(this.fingerL40, 90, 0, 0);
+    this.rotate(this.fingerL41, 90, 0, 0);
+    this.rotate(this.fingerR30, -90, 0, 0);
+    this.rotate(this.fingerR31, -90, 0, 0);
+    this.rotate(this.fingerR40, -90, 0, 0);
+    this.rotate(this.fingerR41, -90, 0, 0);
+    this.rotate(this.legRU, -90, 15, 0);
+    this.rotate(this.legRD, 105, 0, 0);
 
     // Event listener for interactions
     this.handleKeyDown = (e) => {
@@ -188,6 +264,8 @@ export default class Assignment2 extends cs380.BaseApp {
     console.log(`key down: ${key}`);
     if (key == "w") this.body.transform.localPosition[2] += -1;
     if (key == "s") this.body.transform.localPosition[2] += 1;
+    if (key == "a") this.body.transform.localPosition[0] += -0.5;
+    if (key == "d") this.body.transform.localPosition[0] += 0.5;
   }
 
   onMouseDown(e) {
