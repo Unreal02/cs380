@@ -18,20 +18,7 @@ export function generatePlane(xlen = 1, ylen = 1) {
   xlen *= 0.5;
   ylen *= 0.5;
 
-  data.vertices.push(
-    +xlen,
-    -ylen,
-    0,
-    -xlen,
-    -ylen,
-    0,
-    -xlen,
-    +ylen,
-    0,
-    +xlen,
-    +ylen,
-    0
-  );
+  data.vertices.push(+xlen, -ylen, 0, -xlen, -ylen, 0, -xlen, +ylen, 0, +xlen, +ylen, 0);
 
   data.textures.push(
     // from bottom-left, CCW
@@ -155,18 +142,12 @@ export function generateSphere(radius = 1, longitudes = 64, latitudes = 32) {
   for (var i = 0; i < longitudes; i++) {
     const p0 = [0, radius, 0];
     const p0_ = [0, -radius, 0];
-    const p1 = angle2xyz(
-      (i / longitudes) * 2 * Math.PI,
-      (1 / latitudes) * Math.PI
-    );
+    const p1 = angle2xyz((i / longitudes) * 2 * Math.PI, (1 / latitudes) * Math.PI);
     const p1_ = angle2xyz(
       ((i + 1) / longitudes) * 2 * Math.PI,
       ((latitudes - 1) / latitudes) * Math.PI
     );
-    const p2 = angle2xyz(
-      ((i + 1) / longitudes) * 2 * Math.PI,
-      (1 / latitudes) * Math.PI
-    );
+    const p2 = angle2xyz(((i + 1) / longitudes) * 2 * Math.PI, (1 / latitudes) * Math.PI);
     const p2_ = angle2xyz(
       (i / longitudes) * 2 * Math.PI,
       ((latitudes - 1) / latitudes) * Math.PI
@@ -179,10 +160,7 @@ export function generateSphere(radius = 1, longitudes = 64, latitudes = 32) {
   // other faces
   for (var i = 0; i < longitudes; i++) {
     for (var j = 1; j < latitudes - 1; j++) {
-      const p0 = angle2xyz(
-        (i / longitudes) * 2 * Math.PI,
-        (j / latitudes) * Math.PI
-      );
+      const p0 = angle2xyz((i / longitudes) * 2 * Math.PI, (j / latitudes) * Math.PI);
       const p1 = angle2xyz(
         (i / longitudes) * 2 * Math.PI,
         ((j + 1) / latitudes) * Math.PI
@@ -288,6 +266,19 @@ export function generateCylinder(radius = 1, height = 1, sides = 64) {
     data.vertexNormals.push(...n1, ...n2, ...n2);
     data.vertexNormals.push(...n1, ...n1, ...n2);
   }
+
+  return data;
+}
+
+// capsule = cylinder + sphere + sphere
+export function generateCapsule(radius = 1, height = 1, sides = 64) {
+  const data = generateCylinder(radius, height, sides);
+  const data1 = generateSphere(radius, sides, sides / 2);
+
+  data.vertices.push(...data1.vertices.map((v, i) => (i % 3 == 1 ? v + height / 2 : v)));
+  data.vertices.push(...data1.vertices.map((v, i) => (i % 3 == 1 ? v - height / 2 : v)));
+  data.vertexNormals.push(...data1.vertexNormals);
+  data.vertexNormals.push(...data1.vertexNormals);
 
   return data;
 }
