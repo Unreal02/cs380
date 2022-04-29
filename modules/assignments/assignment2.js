@@ -75,9 +75,9 @@ export default class Assignment2 extends cs380.BaseApp {
 
     // body
     const bodyMesh = new cs380.Mesh();
+    this.thingsToClear.push(bodyMesh);
     this.body = new cs380.RenderObject(bodyMesh, simpleShader);
     this.body.transform.localPosition = [0, 0, -10];
-    this.thingsToClear.push(bodyMesh);
 
     // body0
     const body0Mesh = cs380.Mesh.fromData(cs380.primitives.generateCone(1, 4));
@@ -143,6 +143,7 @@ export default class Assignment2 extends cs380.BaseApp {
 
     // head
     const headMesh = cs380.Mesh.fromData(cs380.primitives.generateSphere(0.5));
+    this.thingsToClear.push(headMesh);
     this.head = new cs380.PickableObject(
       headMesh,
       simpleShader,
@@ -152,7 +153,6 @@ export default class Assignment2 extends cs380.BaseApp {
     this.head.transform.localPosition = [0, 3.5, 0];
     this.head.transform.localScale = [0.8, 1, 0.8];
     this.head.transform.setParent(this.body.transform);
-    this.thingsToClear.push(headMesh);
     this.avatarList.push(this.head);
 
     // leg and arm mesh
