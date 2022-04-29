@@ -125,7 +125,7 @@ export function generateCube(xlen = 1, ylen = 1, zlen = 1) {
   return data;
 }
 
-export function generateSphere(longitudes = 16, latitudes = 8) {
+export function generateSphere(radius = 1, longitudes = 64, latitudes = 32) {
   const data = {
     vertices: [],
     vertexNormals: [],
@@ -146,15 +146,15 @@ export function generateSphere(longitudes = 16, latitudes = 8) {
   };
 
   const angle2xyz = (theta, phi) => [
-    Math.cos(theta) * Math.sin(phi),
-    Math.cos(phi),
-    -Math.sin(theta) * Math.sin(phi),
+    radius * Math.cos(theta) * Math.sin(phi),
+    radius * Math.cos(phi),
+    radius * -Math.sin(theta) * Math.sin(phi),
   ];
 
   // pole
   for (var i = 0; i < longitudes; i++) {
-    const p0 = [0, 1, 0];
-    const p0_ = [0, -1, 0];
+    const p0 = [0, radius, 0];
+    const p0_ = [0, -radius, 0];
     const p1 = angle2xyz(
       (i / longitudes) * 2 * Math.PI,
       (1 / latitudes) * Math.PI
@@ -203,7 +203,7 @@ export function generateSphere(longitudes = 16, latitudes = 8) {
   return data;
 }
 
-export function generateCone(sides = 16, radius = 1, height = 1) {
+export function generateCone(radius = 1, height = 1, sides = 64) {
   const data = {
     vertices: [],
     vertexNormals: [],
@@ -213,10 +213,39 @@ export function generateCone(sides = 16, radius = 1, height = 1) {
 
   // TODO: Implement cone generation
 
+  // bottom
+  for (var i = 0; i < sides; i++) {
+    const theta = (i / sides) * 2 * Math.PI;
+    const theta_ = ((i + 1) / sides) * 2 * Math.PI;
+    const p0 = [0, 0, 0];
+    const p1 = [radius * Math.cos(theta), 0, radius * Math.sin(theta)];
+    const p2 = [radius * Math.cos(theta_), 0, radius * Math.sin(theta_)];
+    data.vertices.push(...p0, ...p1, ...p2);
+    data.vertexNormals.push(0, -1, 0, 0, -1, 0, 0, -1, 0);
+  }
+
+  // side
+  for (var i = 0; i < sides; i++) {
+    const theta = (i / sides) * 2 * Math.PI;
+    const theta_ = ((i + 1) / sides) * 2 * Math.PI;
+    const p0 = [0, height, 0];
+    const p1 = [radius * Math.cos(theta), 0, radius * Math.sin(theta)];
+    const p2 = [radius * Math.cos(theta_), 0, radius * Math.sin(theta_)];
+    const n0 = [
+      height * Math.cos((theta + theta_) / 2),
+      radius,
+      height * Math.sin((theta + theta_) / 2),
+    ];
+    const n1 = [height * Math.cos(theta), radius, height * Math.sin(theta)];
+    const n2 = [height * Math.cos(theta_), radius, height * Math.sin(theta_)];
+    data.vertices.push(...p0, ...p2, ...p1);
+    data.vertexNormals.push(...n0, ...n2, ...n1);
+  }
+
   return data;
 }
 
-export function generateCylinder(sides = 16, radius = 1, height = 1) {
+export function generateCylinder(radius = 1, height = 1, sides = 64) {
   const data = {
     vertices: [],
     vertexNormals: [],
@@ -225,6 +254,40 @@ export function generateCylinder(sides = 16, radius = 1, height = 1) {
   };
 
   // TODO: Implement cylinder generation
+
+  height /= 2;
+
+  // bottom, top
+  for (var i = 0; i < sides; i++) {
+    const theta = (i / sides) * 2 * Math.PI;
+    const theta_ = ((i + 1) / sides) * 2 * Math.PI;
+    var p0 = [0, -height, 0];
+    var p1 = [radius * Math.cos(theta), -height, radius * Math.sin(theta)];
+    var p2 = [radius * Math.cos(theta_), -height, radius * Math.sin(theta_)];
+    data.vertices.push(...p0, ...p1, ...p2);
+    data.vertexNormals.push(0, -1, 0, 0, -1, 0, 0, -1, 0);
+    p0[1] = height;
+    p1[1] = height;
+    p2[1] = height;
+    data.vertices.push(...p0, ...p2, ...p1);
+    data.vertexNormals.push(0, 1, 0, 0, 1, 0, 0, 1, 0);
+  }
+
+  // side
+  for (var i = 0; i < sides; i++) {
+    const theta = (i / sides) * 2 * Math.PI;
+    const theta_ = ((i + 1) / sides) * 2 * Math.PI;
+    const p1 = [radius * Math.cos(theta), -height, radius * Math.sin(theta)];
+    const p2 = [radius * Math.cos(theta_), -height, radius * Math.sin(theta_)];
+    const p3 = [radius * Math.cos(theta), height, radius * Math.sin(theta)];
+    const p4 = [radius * Math.cos(theta_), height, radius * Math.sin(theta_)];
+    const n1 = [Math.cos(theta), 0, Math.sin(theta)];
+    const n2 = [Math.cos(theta_), 0, Math.sin(theta_)];
+    data.vertices.push(...p1, ...p4, ...p2);
+    data.vertices.push(...p1, ...p3, ...p4);
+    data.vertexNormals.push(...n1, ...n2, ...n2);
+    data.vertexNormals.push(...n1, ...n1, ...n2);
+  }
 
   return data;
 }
