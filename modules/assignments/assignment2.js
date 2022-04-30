@@ -9,6 +9,8 @@ import {
   generateCone,
   generateCube,
   generateCylinder,
+  generateHemisphere,
+  generateQuaterSphere,
   generatePlane,
   generateSphere,
 } from "../cs380/primitives.js";
@@ -43,7 +45,7 @@ export default class Assignment2 extends cs380.BaseApp {
     const bgMesh = new cs380.Mesh();
     this.background = new cs380.RenderObject(bgMesh, simpleShader);
     this.background.transform.localPosition = [0, 0, -bgSize / 2];
-    const bgPlane = cs380.Mesh.fromData(generatePlane(bgSize, bgSize));
+    const bgPlane = cs380.Mesh.fromData(generatePlane(64, 64));
     this.thingsToClear.push(bgMesh, bgPlane);
     this.bgList = [];
 
@@ -63,16 +65,21 @@ export default class Assignment2 extends cs380.BaseApp {
     quat.rotateY(this.bgL.transform.localRotation, quat.create(), -Math.PI / 2);
     addBackgroundComponent("bgR", bgSize / 2, 0, 0);
     quat.rotateY(this.bgR.transform.localRotation, quat.create(), Math.PI / 2);
-    addBackgroundComponent("bgU", 0, bgSize / 2, 0);
-    quat.rotateX(this.bgU.transform.localRotation, quat.create(), -Math.PI / 2);
-    addBackgroundComponent("bgD", 0, -bgSize / 2, 0);
+    addBackgroundComponent("bgD", 0, -5, 0);
     quat.rotateX(this.bgD.transform.localRotation, quat.create(), Math.PI / 2);
+
+    // stage
+    const stageMesh = cs380.Mesh.fromData(cs380.primitives.generateCube(2, 1.4, 2));
+    this.stage = new cs380.RenderObject(stageMesh, simpleShader);
+    this.stage.transform.localPosition = [0, -5, 0];
+    this.bgList.push(this.stage);
 
     // Avatar (pickable)
     this.avatarList = [];
     const colorBlack = [0, 0, 0];
     const colorBlue = [64, 64, 255].map((i) => i / 255);
     const colorSkin = [255, 227, 181].map((i) => i / 255);
+    const colorGray = [0.2, 0.2, 0.2];
 
     // add avatar inner component
     const addAvatarComponentInner = (innerName, name, mesh, innerPos, index, color = colorSkin) => {
@@ -118,27 +125,58 @@ export default class Assignment2 extends cs380.BaseApp {
     this.body03.transform.localScale = [1, 0.3, 0.7];
 
     // head
-    const headMesh = cs380.Mesh.fromData(generateSphere(0.5));
-    this.thingsToClear.push(headMesh);
+    const headMesh = new cs380.Mesh();
+    const head0Mesh = cs380.Mesh.fromData(generateSphere(0.5));
+    const head1Mesh = cs380.Mesh.fromData(generateHemisphere(0.51));
+    const head4Mesh = cs380.Mesh.fromData(generateCube(0.1, 0.1, 0.1));
+    this.thingsToClear.push(headMesh, head0Mesh);
     addAvatarComponent("head", headMesh, [0, 3.5, 0], [0, 0, 0], 2, this.body);
+    addAvatarComponentInner("head0", "head", headMesh, [0, 0, 0], 2);
+    addAvatarComponentInner("head00", "head0", head0Mesh, [0, 0, 0], 2);
+    // addAvatarComponentInner("head01", "head0", head1Mesh, [0, 0, 0], 2, colorBlack);
+    addAvatarComponentInner("head02", "head0", head1Mesh, [0, 0, 0], 2, colorBlack);
+    addAvatarComponentInner("head03", "head0", head1Mesh, [0, 0, 0], 2, colorBlack);
+    addAvatarComponentInner("head04", "head0", head4Mesh, [-0.2, 0, 0.43], 2, colorBlack);
+    addAvatarComponentInner("head05", "head0", head4Mesh, [0.2, 0, 0.43], 2, colorBlack);
     this.head0.transform.localScale = [0.8, 1, 0.8];
+    // this.head01.transform.localRotation = quat.fromEuler(quat.create(), -45, 0, 0);
+    this.head02.transform.localRotation = quat.fromEuler(quat.create(), -45, 45, 0);
+    this.head03.transform.localRotation = quat.fromEuler(quat.create(), -45, -45, 0);
+    this.head04.transform.localRotation = quat.fromEuler(quat.create(), 0, 180, 0);
+    this.head05.transform.localRotation = quat.fromEuler(quat.create(), 0, 180, 0);
+    this.head04.transform.localScale = [1.25, 1, 1.25];
+    this.head05.transform.localScale = [1.25, 1, 1.25];
 
     // leg and arm mesh
     const legMesh = cs380.Mesh.fromData(generateCapsule(0.25, 2));
     const armMesh = cs380.Mesh.fromData(generateCapsule(0.15, 1.3));
-    this.thingsToClear.push(legMesh, armMesh);
+    const footMesh = new cs380.Mesh();
+    const foot01Mesh = cs380.Mesh.fromData(generateQuaterSphere(0.3));
+    this.thingsToClear.push(legMesh, armMesh, footMesh, foot01Mesh);
 
     // leg
     addAvatarComponent("legLU", legMesh, [0.3, 0, 0], [0, -1, 0], 3, this.body);
     addAvatarComponent("legRU", legMesh, [-0.3, 0, 0], [0, -1, 0], 4, this.body);
     addAvatarComponent("legLD", legMesh, [0, -2, 0], [0, -1, 0], 5, this.legLU);
     addAvatarComponent("legRD", legMesh, [0, -2, 0], [0, -1, 0], 6, this.legRU);
+    addAvatarComponent("footL", footMesh, [0, -2, 0], [0, -0.3, 0], 7, this.legLD);
+    addAvatarComponentInner("footL00", "footL0", foot01Mesh, [0, 0, 0], 7, colorGray);
+    addAvatarComponentInner("footL01", "footL0", foot01Mesh, [0, 0, 0], 7, colorGray);
+    this.footL00.transform.localScale = [1, 1.2, 1];
+    this.footL01.transform.localScale = [1, 1.2, 2];
+    this.footL01.transform.localRotation = quat.fromEuler(quat.create(), 0, 180, 0);
+    addAvatarComponent("footR", footMesh, [0, -2, 0], [0, -0.3, 0], 8, this.legRD);
+    addAvatarComponentInner("footR00", "footR0", foot01Mesh, [0, 0, 0], 8, colorGray);
+    addAvatarComponentInner("footR01", "footR0", foot01Mesh, [0, 0, 0], 8, colorGray);
+    this.footR00.transform.localScale = [1, 1.2, 1];
+    this.footR01.transform.localScale = [1, 1.2, 2];
+    this.footR01.transform.localRotation = quat.fromEuler(quat.create(), 0, 180, 0);
 
     // arm
-    addAvatarComponent("armLU", armMesh, [0.66, 2.66, 0], [0, -0.65, 0], 7, this.body);
-    addAvatarComponent("armRU", armMesh, [-0.66, 2.66, 0], [0, -0.65, 0], 8, this.body);
-    addAvatarComponent("armLD", armMesh, [0, -1.3, 0], [0, -0.65, 0], 9, this.armLU);
-    addAvatarComponent("armRD", armMesh, [0, -1.3, 0], [0, -0.65, 0], 10, this.armRU);
+    addAvatarComponent("armLU", armMesh, [0.66, 2.66, 0], [0, -0.65, 0], 9, this.body);
+    addAvatarComponent("armRU", armMesh, [-0.66, 2.66, 0], [0, -0.65, 0], 10, this.body);
+    addAvatarComponent("armLD", armMesh, [0, -1.3, 0], [0, -0.65, 0], 11, this.armLU);
+    addAvatarComponent("armRD", armMesh, [0, -1.3, 0], [0, -0.65, 0], 12, this.armRU);
 
     // hand and finger mesh
     const handMesh0 = cs380.Mesh.fromData(generateCube(0.18, 0.15, 0.06));
@@ -161,60 +199,60 @@ export default class Assignment2 extends cs380.BaseApp {
     );
 
     // left hand
-    addAvatarComponent("handL", handMesh0, [0, -1.3, 0], [0.03, -0.275, 0], 11, this.armLD);
-    addAvatarComponentInner("handL1", "handL", handMesh1, [0.03 + 0.09, -0.275, 0], 11);
-    addAvatarComponentInner("handL2", "handL", handMesh1, [0.03 - 0.09, -0.275, 0], 11);
-    addAvatarComponentInner("handL3", "handL", handMesh23, [0.12, -0.2, 0], 11);
-    addAvatarComponentInner("handL4", "handL", handMesh45, [0.03, -0.1, 0], 11);
+    addAvatarComponent("handL", handMesh0, [0, -1.3, 0], [0.03, -0.275, 0], 13, this.armLD);
+    addAvatarComponentInner("handL1", "handL", handMesh1, [0.03 + 0.09, -0.275, 0], 13);
+    addAvatarComponentInner("handL2", "handL", handMesh1, [0.03 - 0.09, -0.275, 0], 13);
+    addAvatarComponentInner("handL3", "handL", handMesh23, [0.12, -0.2, 0], 13);
+    addAvatarComponentInner("handL4", "handL", handMesh45, [0.03, -0.1, 0], 13);
     quat.rotateZ(this.handL4.transform.localRotation, quat.create(), Math.atan(0.3));
-    addAvatarComponentInner("handL5", "handL", handMesh45, [-0.03, -0.1, 0], 11);
+    addAvatarComponentInner("handL5", "handL", handMesh45, [-0.03, -0.1, 0], 13);
     quat.rotateZ(this.handL5.transform.localRotation, quat.create(), Math.atan(-0.3));
-    addAvatarComponentInner("handL6", "handL", handMesh67, [0.09, -0.1, 0], 11);
+    addAvatarComponentInner("handL6", "handL", handMesh67, [0.09, -0.1, 0], 13);
     quat.rotateZ(this.handL6.transform.localRotation, quat.create(), Math.atan(0.3));
-    addAvatarComponentInner("handL7", "handL", handMesh67, [-0.09, -0.1, 0], 11);
+    addAvatarComponentInner("handL7", "handL", handMesh67, [-0.09, -0.1, 0], 13);
     quat.rotateZ(this.handL7.transform.localRotation, quat.create(), Math.atan(-0.3));
-    addAvatarComponent("fingerL10", fingerMesh4, [-0.12, -0.2, 0], [0, -0.05, 0], 11, this.handL);
-    addAvatarComponent("fingerL11", fingerMesh4, [0, -0.1, 0], [0, -0.05, 0], 11, this.fingerL10);
-    addAvatarComponent("fingerL20", fingerMesh4, [-0.06, -0.35, 0], [0, -0.05, 0], 11, this.handL);
-    addAvatarComponent("fingerL21", fingerMesh4, [0, -0.1, 0], [0, -0.05, 0], 11, this.fingerL20);
-    addAvatarComponent("fingerL22", fingerMesh4, [0, -0.1, 0], [0, -0.05, 0], 11, this.fingerL21);
-    addAvatarComponent("fingerL30", fingerMesh3, [0, -0.35, 0], [0, -0.06, 0], 11, this.handL);
-    addAvatarComponent("fingerL31", fingerMesh3, [0, -0.12, 0], [0, -0.06, 0], 11, this.fingerL30);
-    addAvatarComponent("fingerL32", fingerMesh3, [0, -0.12, 0], [0, -0.06, 0], 11, this.fingerL31);
-    addAvatarComponent("fingerL40", fingerMesh4, [0.06, -0.35, 0], [0, -0.05, 0], 11, this.handL);
-    addAvatarComponent("fingerL41", fingerMesh4, [0, -0.1, 0], [0, -0.05, 0], 11, this.fingerL40);
-    addAvatarComponent("fingerL42", fingerMesh4, [0, -0.1, 0], [0, -0.05, 0], 11, this.fingerL41);
-    addAvatarComponent("fingerL50", fingerMesh5, [0.12, -0.35, 0], [0, -0.04, 0], 11, this.handL);
-    addAvatarComponent("fingerL51", fingerMesh5, [0, -0.08, 0], [0, -0.04, 0], 11, this.fingerL50);
-    addAvatarComponent("fingerL52", fingerMesh5, [0, -0.08, 0], [0, -0.04, 0], 11, this.fingerL51);
+    addAvatarComponent("fingerL10", fingerMesh4, [-0.12, -0.2, 0], [0, -0.05, 0], 13, this.handL);
+    addAvatarComponent("fingerL11", fingerMesh4, [0, -0.1, 0], [0, -0.05, 0], 13, this.fingerL10);
+    addAvatarComponent("fingerL20", fingerMesh4, [-0.06, -0.35, 0], [0, -0.05, 0], 13, this.handL);
+    addAvatarComponent("fingerL21", fingerMesh4, [0, -0.1, 0], [0, -0.05, 0], 13, this.fingerL20);
+    addAvatarComponent("fingerL22", fingerMesh4, [0, -0.1, 0], [0, -0.05, 0], 13, this.fingerL21);
+    addAvatarComponent("fingerL30", fingerMesh3, [0, -0.35, 0], [0, -0.06, 0], 13, this.handL);
+    addAvatarComponent("fingerL31", fingerMesh3, [0, -0.12, 0], [0, -0.06, 0], 13, this.fingerL30);
+    addAvatarComponent("fingerL32", fingerMesh3, [0, -0.12, 0], [0, -0.06, 0], 13, this.fingerL31);
+    addAvatarComponent("fingerL40", fingerMesh4, [0.06, -0.35, 0], [0, -0.05, 0], 13, this.handL);
+    addAvatarComponent("fingerL41", fingerMesh4, [0, -0.1, 0], [0, -0.05, 0], 13, this.fingerL40);
+    addAvatarComponent("fingerL42", fingerMesh4, [0, -0.1, 0], [0, -0.05, 0], 13, this.fingerL41);
+    addAvatarComponent("fingerL50", fingerMesh5, [0.12, -0.35, 0], [0, -0.04, 0], 13, this.handL);
+    addAvatarComponent("fingerL51", fingerMesh5, [0, -0.08, 0], [0, -0.04, 0], 13, this.fingerL50);
+    addAvatarComponent("fingerL52", fingerMesh5, [0, -0.08, 0], [0, -0.04, 0], 13, this.fingerL51);
 
     // right hand
-    addAvatarComponent("handR", handMesh0, [0, -1.3, 0], [-0.03, -0.275, 0], 12, this.armRD);
-    addAvatarComponentInner("handR1", "handR", handMesh1, [-0.03 + 0.09, -0.275, 0], 12);
-    addAvatarComponentInner("handR2", "handR", handMesh1, [-0.03 - 0.09, -0.275, 0], 12);
-    addAvatarComponentInner("handR3", "handR", handMesh23, [-0.12, -0.2, 0], 12);
-    addAvatarComponentInner("handR4", "handR", handMesh45, [0.03, -0.1, 0], 12);
+    addAvatarComponent("handR", handMesh0, [0, -1.3, 0], [-0.03, -0.275, 0], 14, this.armRD);
+    addAvatarComponentInner("handR1", "handR", handMesh1, [-0.03 + 0.09, -0.275, 0], 14);
+    addAvatarComponentInner("handR2", "handR", handMesh1, [-0.03 - 0.09, -0.275, 0], 14);
+    addAvatarComponentInner("handR3", "handR", handMesh23, [-0.12, -0.2, 0], 14);
+    addAvatarComponentInner("handR4", "handR", handMesh45, [0.03, -0.1, 0], 14);
     quat.rotateZ(this.handR4.transform.localRotation, quat.create(), Math.atan(0.3));
-    addAvatarComponentInner("handR5", "handR", handMesh45, [-0.03, -0.1, 0], 12);
+    addAvatarComponentInner("handR5", "handR", handMesh45, [-0.03, -0.1, 0], 14);
     quat.rotateZ(this.handR5.transform.localRotation, quat.create(), Math.atan(-0.3));
-    addAvatarComponentInner("handR6", "handR", handMesh67, [0.09, -0.1, 0], 12);
+    addAvatarComponentInner("handR6", "handR", handMesh67, [0.09, -0.1, 0], 14);
     quat.rotateZ(this.handR6.transform.localRotation, quat.create(), Math.atan(0.3));
-    addAvatarComponentInner("handR7", "handR", handMesh67, [-0.09, -0.1, 0], 12);
+    addAvatarComponentInner("handR7", "handR", handMesh67, [-0.09, -0.1, 0], 14);
     quat.rotateZ(this.handR7.transform.localRotation, quat.create(), Math.atan(-0.3));
-    addAvatarComponent("fingerR10", fingerMesh4, [0.12, -0.2, 0], [0, -0.05, 0], 12, this.handR);
-    addAvatarComponent("fingerR11", fingerMesh4, [0, -0.1, 0], [0, -0.05, 0], 12, this.fingerR10);
-    addAvatarComponent("fingerR20", fingerMesh4, [0.06, -0.35, 0], [0, -0.05, 0], 12, this.handR);
-    addAvatarComponent("fingerR21", fingerMesh4, [0, -0.1, 0], [0, -0.05, 0], 12, this.fingerR20);
-    addAvatarComponent("fingerR22", fingerMesh4, [0, -0.1, 0], [0, -0.05, 0], 12, this.fingerR21);
-    addAvatarComponent("fingerR30", fingerMesh3, [0, -0.35, 0], [0, -0.06, 0], 12, this.handR);
-    addAvatarComponent("fingerR31", fingerMesh3, [0, -0.12, 0], [0, -0.06, 0], 12, this.fingerR30);
-    addAvatarComponent("fingerR32", fingerMesh3, [0, -0.12, 0], [0, -0.06, 0], 12, this.fingerR31);
-    addAvatarComponent("fingerR40", fingerMesh4, [-0.06, -0.35, 0], [0, -0.05, 0], 12, this.handR);
-    addAvatarComponent("fingerR41", fingerMesh4, [0, -0.1, 0], [0, -0.05, 0], 12, this.fingerR40);
-    addAvatarComponent("fingerR42", fingerMesh4, [0, -0.1, 0], [0, -0.05, 0], 12, this.fingerR41);
-    addAvatarComponent("fingerR50", fingerMesh5, [-0.12, -0.35, 0], [0, -0.04, 0], 12, this.handR);
-    addAvatarComponent("fingerR51", fingerMesh5, [0, -0.08, 0], [0, -0.04, 0], 12, this.fingerR50);
-    addAvatarComponent("fingerR52", fingerMesh5, [0, -0.08, 0], [0, -0.04, 0], 12, this.fingerR51);
+    addAvatarComponent("fingerR10", fingerMesh4, [0.12, -0.2, 0], [0, -0.05, 0], 14, this.handR);
+    addAvatarComponent("fingerR11", fingerMesh4, [0, -0.1, 0], [0, -0.05, 0], 14, this.fingerR10);
+    addAvatarComponent("fingerR20", fingerMesh4, [0.06, -0.35, 0], [0, -0.05, 0], 14, this.handR);
+    addAvatarComponent("fingerR21", fingerMesh4, [0, -0.1, 0], [0, -0.05, 0], 14, this.fingerR20);
+    addAvatarComponent("fingerR22", fingerMesh4, [0, -0.1, 0], [0, -0.05, 0], 14, this.fingerR21);
+    addAvatarComponent("fingerR30", fingerMesh3, [0, -0.35, 0], [0, -0.06, 0], 14, this.handR);
+    addAvatarComponent("fingerR31", fingerMesh3, [0, -0.12, 0], [0, -0.06, 0], 14, this.fingerR30);
+    addAvatarComponent("fingerR32", fingerMesh3, [0, -0.12, 0], [0, -0.06, 0], 14, this.fingerR31);
+    addAvatarComponent("fingerR40", fingerMesh4, [-0.06, -0.35, 0], [0, -0.05, 0], 14, this.handR);
+    addAvatarComponent("fingerR41", fingerMesh4, [0, -0.1, 0], [0, -0.05, 0], 14, this.fingerR40);
+    addAvatarComponent("fingerR42", fingerMesh4, [0, -0.1, 0], [0, -0.05, 0], 14, this.fingerR41);
+    addAvatarComponent("fingerR50", fingerMesh5, [-0.12, -0.35, 0], [0, -0.04, 0], 14, this.handR);
+    addAvatarComponent("fingerR51", fingerMesh5, [0, -0.08, 0], [0, -0.04, 0], 14, this.fingerR50);
+    addAvatarComponent("fingerR52", fingerMesh5, [0, -0.08, 0], [0, -0.04, 0], 14, this.fingerR51);
 
     // default pose
     this.currPose = pose.idle;
@@ -265,7 +303,7 @@ export default class Assignment2 extends cs380.BaseApp {
       this.nextPoseList.push({ pose: pose.hello1, interval: 0.5, lerpFunc: this.lerpLinear });
     }
     if (key == "2") {
-      this.setFootLPivot();
+      this.setLegLDPivot();
       this.nextPoseList.push({ pose: pose.hello2, interval: 0.5, lerpFunc: this.lerpLinear });
     }
   }
@@ -292,7 +330,7 @@ export default class Assignment2 extends cs380.BaseApp {
     console.log(`onMouseDown() got index ${index}`);
     if (this.nextPoseList.length > 0) return;
     if (index == 1) {
-      this.setFootLPivot();
+      this.setLegLDPivot();
       this.nextPoseList.push(
         { pose: pose.jumpReady, interval: 0.5, lerpFunc: this.lerpLinear },
         { pose: pose.jump, interval: 0.5, lerpFunc: this.lerpQuadratic2 },
@@ -311,7 +349,7 @@ export default class Assignment2 extends cs380.BaseApp {
 
   update(elapsed, dt) {
     // Updates before rendering here
-    this.simpleOrbitControl.update(dt);
+    // this.simpleOrbitControl.update(dt);
 
     // change pose
     if (this.nextPoseList.length > 0) {
@@ -339,6 +377,18 @@ export default class Assignment2 extends cs380.BaseApp {
             lerpFunc(this.changePoseTime / interval)
           );
         }
+        this.camera.transform.localPosition = vec3.lerp(
+          vec3.create(),
+          this.currPose.camera.position,
+          nextPose.camera.position,
+          lerpFunc(this.changePoseTime / interval)
+        );
+        this.camera.transform.localRotation = quat.slerp(
+          quat.create(),
+          quat.fromEuler(quat.create(), ...this.currPose.camera.rotation),
+          quat.fromEuler(quat.create(), ...nextPose.camera.rotation),
+          lerpFunc(this.changePoseTime / interval)
+        );
       }
     }
 
@@ -374,16 +424,18 @@ export default class Assignment2 extends cs380.BaseApp {
     this.legLU.transform.setParent(this.body.transform);
     this.legLU.transform.localPosition = [0.3, 0, 0];
     this.legLU0.transform.localPosition = [0, -1, 0];
+    this.footL.transform.localPosition = [0, -2, 0];
     this.legLD.transform.setParent(this.legLU.transform);
     this.legLD.transform.localPosition = [0, -2, 0];
     this.legLD0.transform.localPosition = [0, -1, 0];
   }
 
-  setFootLPivot() {
+  setLegLDPivot() {
     this.currPivot = "legLD";
     this.legLD.transform.setParent(null);
     this.legLD.transform.localPosition = [0.3, -4, 0];
     this.legLD0.transform.localPosition = [0, 1, 0];
+    this.footL.transform.localPosition = [0, 0, 0];
     this.legLU.transform.setParent(this.legLD.transform);
     this.legLU.transform.localPosition = [0, 2, 0];
     this.legLU0.transform.localPosition = [0, 1, 0];
@@ -400,6 +452,11 @@ export default class Assignment2 extends cs380.BaseApp {
         ...poseData.rotation[part]
       );
     }
+    this.camera.transform.localPosition = poseData.camera.position;
+    this.camera.transform.localRotation = quat.fromEuler(
+      quat.create(),
+      ...poseData.camera.rotation
+    );
   }
 
   lerpLinear(x) {

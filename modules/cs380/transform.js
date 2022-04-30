@@ -36,22 +36,7 @@ export class Transform {
     );
 
     // TODO: Implement hierarchical frames
-    if (this.parent) {
-      // Mp = Position * Rotation * Scale
-      const mp = mat4.clone(this.parent.worldMatrix);
-
-      const parentScale = mat4.create();
-      const parentScaleInverse = mat4.create();
-      mat4.fromScaling(parentScale, this.parent.localScale);
-      mat4.invert(parentScaleInverse, parentScale);
-
-      // Position * Rotation * _m2
-      const temp1 = mat4.create();
-      const temp2 = mat4.create();
-      mat4.multiply(temp1, mp, parentScaleInverse);
-      mat4.multiply(temp2, temp1, this._m2);
-      this._m2 = temp2;
-    }
+    if (this.parent) this._m2 = mat4.multiply(mat4.create(), this.parent.worldMatrix, this._m2);
 
     return this._m2;
   }

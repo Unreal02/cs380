@@ -148,10 +148,7 @@ export function generateSphere(radius = 1, longitudes = 64, latitudes = 32) {
       ((latitudes - 1) / latitudes) * Math.PI
     );
     const p2 = angle2xyz(((i + 1) / longitudes) * 2 * Math.PI, (1 / latitudes) * Math.PI);
-    const p2_ = angle2xyz(
-      (i / longitudes) * 2 * Math.PI,
-      ((latitudes - 1) / latitudes) * Math.PI
-    );
+    const p2_ = angle2xyz((i / longitudes) * 2 * Math.PI, ((latitudes - 1) / latitudes) * Math.PI);
 
     addTri(p0, p1, p2); // top pole
     addTri(p0_, p1_, p2_); // bottom pole
@@ -161,18 +158,9 @@ export function generateSphere(radius = 1, longitudes = 64, latitudes = 32) {
   for (var i = 0; i < longitudes; i++) {
     for (var j = 1; j < latitudes - 1; j++) {
       const p0 = angle2xyz((i / longitudes) * 2 * Math.PI, (j / latitudes) * Math.PI);
-      const p1 = angle2xyz(
-        (i / longitudes) * 2 * Math.PI,
-        ((j + 1) / latitudes) * Math.PI
-      );
-      const p2 = angle2xyz(
-        ((i + 1) / longitudes) * 2 * Math.PI,
-        ((j + 1) / latitudes) * Math.PI
-      );
-      const p3 = angle2xyz(
-        ((i + 1) / longitudes) * 2 * Math.PI,
-        (j / latitudes) * Math.PI
-      );
+      const p1 = angle2xyz((i / longitudes) * 2 * Math.PI, ((j + 1) / latitudes) * Math.PI);
+      const p2 = angle2xyz(((i + 1) / longitudes) * 2 * Math.PI, ((j + 1) / latitudes) * Math.PI);
+      const p3 = angle2xyz(((i + 1) / longitudes) * 2 * Math.PI, (j / latitudes) * Math.PI);
 
       addQuad(p0, p1, p2, p3);
     }
@@ -279,6 +267,86 @@ export function generateCapsule(radius = 1, height = 1, sides = 64) {
   data.vertices.push(...data1.vertices.map((v, i) => (i % 3 == 1 ? v - height / 2 : v)));
   data.vertexNormals.push(...data1.vertexNormals);
   data.vertexNormals.push(...data1.vertexNormals);
+
+  return data;
+}
+
+export function generateQuaterSphere(radius) {
+  const data = {
+    vertices: [],
+    vertexNormals: [],
+    textures: [],
+    indices: [],
+  };
+
+  const angle2xyz = (theta, phi) => [
+    radius * Math.cos(theta) * Math.sin(phi),
+    radius * Math.cos(phi),
+    radius * -Math.sin(theta) * Math.sin(phi),
+  ];
+
+  // bottom
+  for (var i = 0; i < 32; i++) {
+    const theta = (i * Math.PI) / 32;
+    const theta_ = ((i + 1) * Math.PI) / 32;
+    const p0 = [0, 0, 0];
+    const p1 = [radius * Math.cos(theta), 0, -radius * Math.sin(theta)];
+    const p2 = [radius * Math.cos(theta_), 0, -radius * Math.sin(theta_)];
+    data.vertices.push(...p0, ...p2, ...p1);
+    data.vertexNormals.push(0, -1, 0, 0, -1, 0, 0, -1, 0);
+  }
+
+  // side
+  for (var i = 0; i < 32; i++) {
+    for (var j = 0; j < 16; j++) {
+      const theta = (i * Math.PI) / 32;
+      const theta_ = ((i + 1) * Math.PI) / 32;
+      const phi = (j * Math.PI) / 32;
+      const phi_ = ((j + 1) * Math.PI) / 32;
+      const p0 = angle2xyz(theta, phi);
+      const p1 = angle2xyz(theta_, phi);
+      const p2 = angle2xyz(theta, phi_);
+      const p3 = angle2xyz(theta_, phi_);
+      data.vertices.push(...p0, ...p2, ...p1);
+      data.vertices.push(...p1, ...p2, ...p3);
+      data.vertexNormals.push(...p0, ...p2, ...p1);
+      data.vertexNormals.push(...p1, ...p2, ...p3);
+    }
+  }
+
+  return data;
+}
+
+export function generateHemisphere(radius) {
+  const data = {
+    vertices: [],
+    vertexNormals: [],
+    textures: [],
+    indices: [],
+  };
+
+  const angle2xyz = (theta, phi) => [
+    radius * Math.cos(theta) * Math.sin(phi),
+    radius * Math.cos(phi),
+    radius * -Math.sin(theta) * Math.sin(phi),
+  ];
+
+  for (var i = 0; i < 64; i++) {
+    for (var j = 0; j < 16; j++) {
+      const theta = (i * Math.PI) / 32;
+      const theta_ = ((i + 1) * Math.PI) / 32;
+      const phi = (j * Math.PI) / 32;
+      const phi_ = ((j + 1) * Math.PI) / 32;
+      const p0 = angle2xyz(theta, phi);
+      const p1 = angle2xyz(theta_, phi);
+      const p2 = angle2xyz(theta, phi_);
+      const p3 = angle2xyz(theta_, phi_);
+      data.vertices.push(...p0, ...p2, ...p1);
+      data.vertices.push(...p1, ...p2, ...p3);
+      data.vertexNormals.push(...p0, ...p2, ...p1);
+      data.vertexNormals.push(...p1, ...p2, ...p3);
+    }
+  }
 
   return data;
 }
