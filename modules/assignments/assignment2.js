@@ -4,7 +4,14 @@ import { vec3, mat4, quat, glMatrix } from "../cs380/gl-matrix.js";
 import * as cs380 from "../cs380/cs380.js";
 
 import { SimpleShader } from "../simple_shader.js";
-import { generateCube } from "../cs380/primitives.js";
+import {
+  generateCapsule,
+  generateCone,
+  generateCube,
+  generateCylinder,
+  generatePlane,
+  generateSphere,
+} from "../cs380/primitives.js";
 
 import * as pose from "./assignment2_pose.js";
 
@@ -14,7 +21,7 @@ export default class Assignment2 extends cs380.BaseApp {
     const { width, height } = gl.canvas.getBoundingClientRect();
     const aspectRatio = width / height;
     this.camera = new cs380.Camera();
-    vec3.set(this.camera.transform.localPosition, 0, 0, 5);
+    vec3.set(this.camera.transform.localPosition, 0, 0, 15);
     mat4.perspective(this.camera.projectionMatrix, glMatrix.toRadian(45), aspectRatio, 0.01, 100);
 
     // things to finalize()
@@ -36,7 +43,7 @@ export default class Assignment2 extends cs380.BaseApp {
     const bgMesh = new cs380.Mesh();
     this.background = new cs380.RenderObject(bgMesh, simpleShader);
     this.background.transform.localPosition = [0, 0, -bgSize / 2];
-    const bgPlane = cs380.Mesh.fromData(cs380.primitives.generatePlane(bgSize, bgSize));
+    const bgPlane = cs380.Mesh.fromData(generatePlane(bgSize, bgSize));
     this.thingsToClear.push(bgMesh, bgPlane);
     this.bgList = [];
 
@@ -64,7 +71,7 @@ export default class Assignment2 extends cs380.BaseApp {
     // Avatar (pickable)
     this.avatarList = [];
     const colorBlack = [0, 0, 0];
-    const colorPink = [223, 32, 175].map((i) => i / 255);
+    const colorBlue = [64, 64, 255].map((i) => i / 255);
     const colorSkin = [255, 227, 181].map((i) => i / 255);
 
     // add avatar inner component
@@ -90,34 +97,35 @@ export default class Assignment2 extends cs380.BaseApp {
 
     // body mesh
     const bodyMesh = new cs380.Mesh();
-    const body0Mesh = cs380.Mesh.fromData(cs380.primitives.generateCone(1, 4));
-    const body1Mesh = cs380.Mesh.fromData(cs380.primitives.generateCone(0.8, 3.2));
-    const body2Mesh = cs380.Mesh.fromData(cs380.primitives.generateCylinder(0.15, 1));
-    const body3Mesh = cs380.Mesh.fromData(cs380.primitives.generateSphere(0.8));
+    const body0Mesh = cs380.Mesh.fromData(generateCone(1, 4));
+    const body1Mesh = cs380.Mesh.fromData(generateCone(0.8, 3.2));
+    const body2Mesh = cs380.Mesh.fromData(generateCylinder(0.15, 1));
+    const body3Mesh = cs380.Mesh.fromData(generateSphere(0.8));
     this.thingsToClear.push(bodyMesh, body0Mesh, body1Mesh, body2Mesh, body3Mesh);
 
     // body
     this.body = new cs380.RenderObject(bodyMesh, simpleShader);
     this.body.transform.localPosition = [0, 0, 0];
-    addAvatarComponentInner("body0", "body", body0Mesh, [0, -0.5, 0], 1, colorBlack);
-    this.body0.transform.localScale = [1, 1, 0.7];
-    addAvatarComponentInner("body1", "body", body1Mesh, [0, 2.7, 0], 1, colorPink);
-    this.body1.transform.localScale = [1, 1, 0.7];
-    quat.rotateX(this.body1.transform.localRotation, quat.create(), Math.PI);
-    addAvatarComponentInner("body2", "body", body2Mesh, [0, 3, 0], 1);
-    quat.rotateX(this.body2.transform.localRotation, quat.create(), Math.PI);
-    addAvatarComponentInner("body3", "body", body3Mesh, [0, 2.7, 0], 1, colorPink);
-    this.body3.transform.localScale = [1, 0.3, 0.7];
+    addAvatarComponentInner("body0", "body", bodyMesh, [0, 0, 0], 1);
+    addAvatarComponentInner("body00", "body", body0Mesh, [0, -0.5, 0], 1, colorBlack);
+    this.body00.transform.localScale = [1, 1, 0.7];
+    addAvatarComponentInner("body01", "body0", body1Mesh, [0, 2.7, 0], 1, colorBlue);
+    this.body01.transform.localScale = [1, 1, 0.7];
+    quat.rotateX(this.body01.transform.localRotation, quat.create(), Math.PI);
+    addAvatarComponentInner("body02", "body0", body2Mesh, [0, 3, 0], 1);
+    quat.rotateX(this.body02.transform.localRotation, quat.create(), Math.PI);
+    addAvatarComponentInner("body03", "body0", body3Mesh, [0, 2.7, 0], 1, colorBlue);
+    this.body03.transform.localScale = [1, 0.3, 0.7];
 
     // head
-    const headMesh = cs380.Mesh.fromData(cs380.primitives.generateSphere(0.5));
+    const headMesh = cs380.Mesh.fromData(generateSphere(0.5));
     this.thingsToClear.push(headMesh);
     addAvatarComponent("head", headMesh, [0, 3.5, 0], [0, 0, 0], 2, this.body);
     this.head0.transform.localScale = [0.8, 1, 0.8];
 
     // leg and arm mesh
-    const legMesh = cs380.Mesh.fromData(cs380.primitives.generateCapsule(0.25, 2));
-    const armMesh = cs380.Mesh.fromData(cs380.primitives.generateCapsule(0.15, 1.3));
+    const legMesh = cs380.Mesh.fromData(generateCapsule(0.25, 2));
+    const armMesh = cs380.Mesh.fromData(generateCapsule(0.15, 1.3));
     this.thingsToClear.push(legMesh, armMesh);
 
     // leg
@@ -133,16 +141,14 @@ export default class Assignment2 extends cs380.BaseApp {
     addAvatarComponent("armRD", armMesh, [0, -1.3, 0], [0, -0.65, 0], 10, this.armRU);
 
     // hand and finger mesh
-    const handMesh0 = cs380.Mesh.fromData(cs380.primitives.generateCube(0.18, 0.15, 0.06));
-    const handMesh1 = cs380.Mesh.fromData(cs380.primitives.generateCylinder(0.03, 0.15));
-    const handMesh23 = cs380.Mesh.fromData(cs380.primitives.generateSphere(0.03));
-    const handMesh45 = cs380.Mesh.fromData(
-      cs380.primitives.generateCube(0.12 * 0.9578, 0.2 / 0.9578 + 0.06, 0.06)
-    );
-    const handMesh67 = cs380.Mesh.fromData(cs380.primitives.generateCylinder(0.03, 0.2 / 0.9578));
-    const fingerMesh3 = cs380.Mesh.fromData(cs380.primitives.generateCapsule(0.03, 0.12));
-    const fingerMesh4 = cs380.Mesh.fromData(cs380.primitives.generateCapsule(0.03, 0.1));
-    const fingerMesh5 = cs380.Mesh.fromData(cs380.primitives.generateCapsule(0.03, 0.08));
+    const handMesh0 = cs380.Mesh.fromData(generateCube(0.18, 0.15, 0.06));
+    const handMesh1 = cs380.Mesh.fromData(generateCylinder(0.03, 0.15));
+    const handMesh23 = cs380.Mesh.fromData(generateSphere(0.03));
+    const handMesh45 = cs380.Mesh.fromData(generateCube(0.12 * 0.9578, 0.2 / 0.9578 + 0.06, 0.06));
+    const handMesh67 = cs380.Mesh.fromData(generateCylinder(0.03, 0.2 / 0.9578));
+    const fingerMesh3 = cs380.Mesh.fromData(generateCapsule(0.03, 0.12));
+    const fingerMesh4 = cs380.Mesh.fromData(generateCapsule(0.03, 0.1));
+    const fingerMesh5 = cs380.Mesh.fromData(generateCapsule(0.03, 0.08));
     this.thingsToClear.push(
       handMesh0,
       handMesh1,
@@ -211,13 +217,18 @@ export default class Assignment2 extends cs380.BaseApp {
     addAvatarComponent("fingerR52", fingerMesh5, [0, -0.08, 0], [0, -0.04, 0], 12, this.fingerR51);
 
     // default pose
-    this.setPose(pose.idle);
+    this.currPose = pose.idle;
+    this.setBodyPivot();
+    this.setPose(this.currPose);
 
     // Event listener for interactions
     this.handleKeyDown = (e) => {
       // e.repeat is true when the key has been helded for a while
       if (e.repeat) return;
       this.onKeyDown(e.key);
+    };
+    this.handleKeyUp = (e) => {
+      this.onKeyUp(e.key);
     };
     this.handleMouseDown = (e) => {
       // e.button = 0 if it is left mouse button
@@ -226,6 +237,7 @@ export default class Assignment2 extends cs380.BaseApp {
     };
 
     document.addEventListener("keydown", this.handleKeyDown);
+    document.addEventListener("keyup", this.handleKeyUp);
     gl.canvas.addEventListener("mousedown", this.handleMouseDown);
 
     document.getElementById("settings").innerHTML = `
@@ -247,8 +259,26 @@ export default class Assignment2 extends cs380.BaseApp {
 
   onKeyDown(key) {
     console.log(`key down: ${key}`);
-    if (key == "0") this.nextPose = pose.idle;
-    if (key == "1") this.nextPose = pose.hello;
+    if (this.nextPoseList.length > 0) return;
+    if (key == "1") {
+      this.setBodyPivot();
+      this.nextPoseList.push({ pose: pose.hello1, interval: 0.5, lerpFunc: this.lerpLinear });
+    }
+    if (key == "2") {
+      this.setFootLPivot();
+      this.nextPoseList.push({ pose: pose.hello2, interval: 0.5, lerpFunc: this.lerpLinear });
+    }
+  }
+
+  onKeyUp(key) {
+    console.log(`key up: ${key}`);
+    if (this.nextPoseList.length > 1) return;
+    if (key == "1") {
+      this.nextPoseList.push({ pose: pose.idle, interval: 0.5, lerpFunc: this.lerpLinear });
+    }
+    if (key == "2") {
+      this.nextPoseList.push({ pose: pose.idle, interval: 0.5, lerpFunc: this.lerpLinear });
+    }
   }
 
   onMouseDown(e) {
@@ -260,6 +290,16 @@ export default class Assignment2 extends cs380.BaseApp {
     const index = this.pickingBuffer.pick(x, y);
 
     console.log(`onMouseDown() got index ${index}`);
+    if (this.nextPoseList.length > 0) return;
+    if (index == 1) {
+      this.setFootLPivot();
+      this.nextPoseList.push(
+        { pose: pose.jumpReady, interval: 0.5, lerpFunc: this.lerpLinear },
+        { pose: pose.jump, interval: 0.5, lerpFunc: this.lerpQuadratic2 },
+        { pose: pose.jumpReady, interval: 0.5, lerpFunc: this.lerpQuadratic1 },
+        { pose: pose.idle, interval: 0.5, lerpFunc: this.lerpLinear }
+      );
+    }
   }
 
   finalize() {
@@ -274,20 +314,29 @@ export default class Assignment2 extends cs380.BaseApp {
     this.simpleOrbitControl.update(dt);
 
     // change pose
-    if (this.nextPose) {
-      if (this.changePoseTime >= 1) {
-        this.setPose(this.nextPose);
-        this.prevPose = this.nextPose;
-        this.nextPose = null;
+    if (this.nextPoseList.length > 0) {
+      const nextPose = this.nextPoseList[0].pose;
+      const interval = this.nextPoseList[0].interval;
+      const lerpFunc = this.nextPoseList[0].lerpFunc;
+      if (this.changePoseTime >= interval) {
+        this.setPose(nextPose);
+        this.currPose = nextPose;
+        this.nextPoseList.shift();
         this.changePoseTime = 0;
       } else {
         this.changePoseTime += dt;
-        for (const part in this.prevPose) {
+        this[this.currPivot].transform.localPosition = vec3.lerp(
+          vec3.create(),
+          this.currPose.position[this.currPivot],
+          nextPose.position[this.currPivot],
+          lerpFunc(this.changePoseTime / interval)
+        );
+        for (const part in this.currPose.rotation) {
           this[part].transform.localRotation = quat.slerp(
             quat.create(),
-            quat.fromEuler(quat.create(), ...this.prevPose[part]),
-            quat.fromEuler(quat.create(), ...this.nextPose[part]),
-            this.changePoseTime
+            quat.fromEuler(quat.create(), ...this.currPose.rotation[part]),
+            quat.fromEuler(quat.create(), ...nextPose.rotation[part]),
+            lerpFunc(this.changePoseTime / interval)
           );
         }
       }
@@ -317,12 +366,58 @@ export default class Assignment2 extends cs380.BaseApp {
     this.avatarList.forEach((i) => i.render(this.camera));
   }
 
-  setPose(poseData) {
-    for (const part in poseData)
-      this[part].transform.localRotation = quat.fromEuler(quat.create(), ...poseData[part]);
+  setBodyPivot() {
+    this.currPivot = "body";
+    this.body.transform.setParent(null);
+    this.body.transform.localPosition = [0, 0, 0];
+    this.body0.transform.localPosition = [0, 0, 0];
+    this.legLU.transform.setParent(this.body.transform);
+    this.legLU.transform.localPosition = [0.3, 0, 0];
+    this.legLU0.transform.localPosition = [0, -1, 0];
+    this.legLD.transform.setParent(this.legLU.transform);
+    this.legLD.transform.localPosition = [0, -2, 0];
+    this.legLD0.transform.localPosition = [0, -1, 0];
   }
 
-  prevPose = pose.idle;
-  nextPose = null;
+  setFootLPivot() {
+    this.currPivot = "legLD";
+    this.legLD.transform.setParent(null);
+    this.legLD.transform.localPosition = [0.3, -4, 0];
+    this.legLD0.transform.localPosition = [0, 1, 0];
+    this.legLU.transform.setParent(this.legLD.transform);
+    this.legLU.transform.localPosition = [0, 2, 0];
+    this.legLU0.transform.localPosition = [0, 1, 0];
+    this.body.transform.setParent(this.legLU.transform);
+    this.body.transform.localPosition = [-0.3, 2, 0];
+    this.body0.transform.localPosition = [0, 0, 0];
+  }
+
+  setPose(poseData) {
+    this[this.currPivot].transform.localPosition = poseData.position[this.currPivot];
+    for (const part in poseData.rotation) {
+      this[part].transform.localRotation = quat.fromEuler(
+        quat.create(),
+        ...poseData.rotation[part]
+      );
+    }
+  }
+
+  lerpLinear(x) {
+    return x;
+  }
+
+  lerpQuadratic1(x) {
+    return x * x;
+  }
+
+  lerpQuadratic2(x) {
+    return -x * x + 2 * x;
+  }
+
+  currPivot;
+  currPose;
+  nextPoseList = [];
+  intervalList = [];
+  lerpFuncList = [];
   changePoseTime = 0;
 }
