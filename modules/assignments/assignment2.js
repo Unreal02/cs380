@@ -29,10 +29,6 @@ export default class Assignment2 extends cs380.BaseApp {
     // things to finalize()
     this.thingsToClear = [];
 
-    // SimpleOrbitControl
-    this.simpleOrbitControl = new cs380.utils.SimpleOrbitControl(this.camera, [0, 0, 0]);
-    this.thingsToClear.push(this.simpleOrbitControl);
-
     // initialize shader & buffer
     const simpleShader = await cs380.buildShader(SimpleShader);
     const pickingShader = await cs380.buildShader(cs380.PickingShader);
@@ -70,9 +66,22 @@ export default class Assignment2 extends cs380.BaseApp {
 
     // stage
     const stageMesh = cs380.Mesh.fromData(cs380.primitives.generateCube(2, 1.4, 2));
+    this.thingsToClear.push(stageMesh);
     this.stage = new cs380.RenderObject(stageMesh, simpleShader);
     this.stage.transform.localPosition = [0, -5, 0];
     this.bgList.push(this.stage);
+
+    // cube
+    this.cubeList = [];
+    const cubeMesh = cs380.Mesh.fromData(cs380.primitives.generateCube(3, 3, 3));
+    this.thingsToClear.push(cubeMesh);
+    this.cube = new cs380.RenderObject(cubeMesh, simpleShader);
+    this.cube.transform.localPosition = [5, 0, 0];
+    this.cubeList.push(this.cube);
+
+    const tileMesh = cs380.Mesh.fromData(cs380.primitives.generateCube(0.9, 0.9, 0.1));
+    this.thingsToClear.push(tileMesh);
+    this.tileR = new cs380.PickableObject(tileMesh, simpleShader, pickingShader, 101);
 
     // Avatar (pickable)
     this.avatarList = [];
@@ -259,6 +268,9 @@ export default class Assignment2 extends cs380.BaseApp {
     this.setBodyPivot();
     this.setPose(this.currPose);
 
+    // arcball setting
+    this.arcballTarget = this.cube;
+
     // Event listener for interactions
     this.handleKeyDown = (e) => {
       // e.repeat is true when the key has been helded for a while
@@ -273,10 +285,21 @@ export default class Assignment2 extends cs380.BaseApp {
       if (e.button !== 0) return;
       this.onMouseDown(e);
     };
+    this.handleMouseUp = (e) => {
+      if (e.button !== 0) return;
+      this.onMouseUp(e);
+    };
+    this.handleMouseMove = (e) => {
+      if (e.button !== 0) return;
+      this.onMouseMove(e);
+    };
+    this.mousePressed = false;
 
     document.addEventListener("keydown", this.handleKeyDown);
     document.addEventListener("keyup", this.handleKeyUp);
     gl.canvas.addEventListener("mousedown", this.handleMouseDown);
+    document.addEventListener("mouseup", this.handleMouseUp);
+    gl.canvas.addEventListener("mousemove", this.handleMouseMove);
 
     document.getElementById("settings").innerHTML = `
       <h3>Basic requirements</h3>
@@ -297,6 +320,7 @@ export default class Assignment2 extends cs380.BaseApp {
 
   onKeyDown(key) {
     console.log(`key down: ${key}`);
+    if (key == "0") this.arcballTarget.transform.localRotation = [0, 0, 0, 1];
     if (this.nextPoseList.length > 0) return;
     if (key == "1") {
       this.setBodyPivot();
@@ -319,6 +343,17 @@ export default class Assignment2 extends cs380.BaseApp {
     }
   }
 
+  xy2ArcballVec(x, y) {
+    var z = Math.sqrt(1 - x * x - y * y);
+    if (x * x + y * y >= 1) {
+      var magnitude = x * x + y * y;
+      x /= magnitude;
+      y /= magnitude;
+      z = -Math.sqrt(1 - x * x - y * y);
+    }
+    return vec3.normalize(vec3.create(), [x, y, z]);
+  }
+
   onMouseDown(e) {
     const { left, bottom } = gl.canvas.getBoundingClientRect();
     const x = e.clientX - left;
@@ -328,6 +363,14 @@ export default class Assignment2 extends cs380.BaseApp {
     const index = this.pickingBuffer.pick(x, y);
 
     console.log(`onMouseDown() got index ${index}`);
+    this.mousePressed = true;
+
+    console.log(x, y);
+
+    var x0 = (e.clientX - left - 400) / 300;
+    var y0 = (bottom - e.clientY - 400) / 300;
+    this.prevArcballVector = this.xy2ArcballVec(x0, y0);
+
     if (this.nextPoseList.length > 0) return;
     if (index == 1) {
       this.setLegLDPivot();
@@ -338,6 +381,34 @@ export default class Assignment2 extends cs380.BaseApp {
         { pose: pose.idle, interval: 0.5, lerpFunc: this.lerpLinear }
       );
     }
+  }
+
+  onMouseUp(e) {
+    this.mousePressed = false;
+  }
+
+  // arcball
+  onMouseMove(e) {
+    if (!this.mousePressed) return;
+
+    // x, y: value of -400 ~ 400
+    // my ball: radius of 300
+    const { left, bottom } = gl.canvas.getBoundingClientRect();
+
+    var x = (e.clientX - left - 400) / 300;
+    var y = (bottom - e.clientY - 400) / 300;
+    var v = this.xy2ArcballVec(x, y);
+    var v0 = this.prevArcballVector;
+
+    var n = vec3.normalize(vec3.create(), vec3.cross(vec3.create(), v0, v));
+    var angle = vec3.angle(v0, v);
+
+    var q = quat.setAxisAngle(quat.create(), n, angle);
+    var q0 = quat.clone(this.arcballTarget.transform.localRotation);
+    var q_ = quat.mul(quat.create(), q, q0);
+    this.arcballTarget.transform.localRotation = quat.mul(quat.create(), q, q0);
+
+    this.prevArcballVector = v;
   }
 
   finalize() {
@@ -414,6 +485,7 @@ export default class Assignment2 extends cs380.BaseApp {
     // render() here
     this.bgList.forEach((i) => i.render(this.camera));
     this.avatarList.forEach((i) => i.render(this.camera));
+    this.cubeList.forEach((i) => i.render(this.camera));
   }
 
   setBodyPivot() {
@@ -477,4 +549,5 @@ export default class Assignment2 extends cs380.BaseApp {
   intervalList = [];
   lerpFuncList = [];
   changePoseTime = 0;
+  arcballTarget;
 }
