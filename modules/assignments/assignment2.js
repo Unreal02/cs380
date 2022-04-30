@@ -350,15 +350,40 @@ export default class Assignment2 extends cs380.BaseApp {
     gl.canvas.addEventListener("mousemove", this.handleMouseMove);
 
     document.getElementById("settings").innerHTML = `
-      <h3>Basic requirements</h3>
-      <ul>
-        <li>Generate 3D geometric objects: cone and cylinder</li>
-        <li>Construct your avatar with hierarchical modeling containing at least 10 parts</li>
-        <li>Introduce interactive avatar posing from keyboard and mouse inputs</li>
-        <li>Show some creativity in your scene</li>
-      </ul>
-      <strong>Start early!</strong>
+      <div>
+      <label for="hello1Time">Hello1 Time (0.1~2)</label>
+      <input type="range" id="hello1Time" value="0.5" min="0.1" max="2" step="any">
+      </div>
+      <div>
+      <label for="hello2Time">Hello2 Time (0.1~2)</label>
+      <input type="range" id="hello2Time" value="0.5" min="0.1" max="2" step="any">
+      </div>
+      <div>
+      <label for="jumpreadyTime">Jump Ready Time (0.1~2)</label>
+      <input type="range" id="jumpreadyTime" value="0.5" min="0.1" max="2" step="any">
+      </div>
+      <div>
+      <label for="jumpTime">Jump Time (0.1~2)</label>
+      <input type="range" id="jumpTime" value="0.5" min="0.1" max="2" step="any">
+      </div>
     `;
+    this.hello1Time = 0.5;
+    this.hello2Time = 0.5;
+    this.jumpreadyTime = 0.5;
+    this.jumpTime = 0.5;
+
+    cs380.utils.setInputBehavior("hello1Time", (val) => {
+      this.hello1Time = val;
+    });
+    cs380.utils.setInputBehavior("hello2Time", (val) => {
+      this.hello2Time = val;
+    });
+    cs380.utils.setInputBehavior("jumpreadyTime", (val) => {
+      this.jumpreadyTime = val;
+    });
+    cs380.utils.setInputBehavior("jumpTime", (val) => {
+      this.jumpTime = val;
+    });
 
     // GL settings
     gl.enable(gl.CULL_FACE);
@@ -379,11 +404,19 @@ export default class Assignment2 extends cs380.BaseApp {
     if (this.nextPoseList.length > 0) return;
     if (key == "1") {
       this.setBodyPivot();
-      this.nextPoseList.push({ pose: pose.hello1, interval: 0.5, lerpFunc: this.lerpLinear });
+      this.nextPoseList.push({
+        pose: pose.hello1,
+        interval: this.hello1Time,
+        lerpFunc: this.lerpLinear,
+      });
     }
     if (key == "2") {
       this.setLegLDPivot();
-      this.nextPoseList.push({ pose: pose.hello2, interval: 0.5, lerpFunc: this.lerpLinear });
+      this.nextPoseList.push({
+        pose: pose.hello2,
+        interval: this.hello2Time,
+        lerpFunc: this.lerpLinear,
+      });
     }
   }
 
@@ -391,10 +424,18 @@ export default class Assignment2 extends cs380.BaseApp {
     console.log(`key up: ${key}`);
     if (this.nextPoseList.length > 1) return;
     if (key == "1") {
-      this.nextPoseList.push({ pose: pose.idle, interval: 0.5, lerpFunc: this.lerpLinear });
+      this.nextPoseList.push({
+        pose: pose.idle,
+        interval: this.hello1Time,
+        lerpFunc: this.lerpLinear,
+      });
     }
     if (key == "2") {
-      this.nextPoseList.push({ pose: pose.idle, interval: 0.5, lerpFunc: this.lerpLinear });
+      this.nextPoseList.push({
+        pose: pose.idle,
+        interval: this.hello2Time,
+        lerpFunc: this.lerpLinear,
+      });
     }
   }
 
@@ -429,10 +470,10 @@ export default class Assignment2 extends cs380.BaseApp {
       if (index == 1) {
         this.setLegLDPivot();
         this.nextPoseList.push(
-          { pose: pose.jumpReady, interval: 0.5, lerpFunc: this.lerpLinear },
-          { pose: pose.jump, interval: 0.5, lerpFunc: this.lerpQuadratic2 },
-          { pose: pose.jumpReady, interval: 0.5, lerpFunc: this.lerpQuadratic1 },
-          { pose: pose.idle, interval: 0.5, lerpFunc: this.lerpLinear }
+          { pose: pose.jumpReady, interval: this.jumpreadyTime, lerpFunc: this.lerpLinear },
+          { pose: pose.jump, interval: this.jumpTime, lerpFunc: this.lerpQuadratic2 },
+          { pose: pose.jumpReady, interval: this.jumpTime, lerpFunc: this.lerpQuadratic1 },
+          { pose: pose.idle, interval: this.jumpreadyTime, lerpFunc: this.lerpLinear }
         );
       }
     }
