@@ -77,10 +77,11 @@ export default class Assignment2 extends cs380.BaseApp {
     this.thingsToClear.push(cubeMesh);
     this.cube = new cs380.PickableObject(cubeMesh, simpleShader, pickingShader, 100);
     this.cube.transform.localPosition = [5, 0, 0];
-    this.cube.transform.localScale = [0.7, 0.7, 0.7];
+    this.cube.transform.localScale = [0.5, 0.5, 0.5];
     this.cube.uniforms.mainColor = [0, 0, 0];
     this.cubeList.push(this.cube);
 
+    // cube tile
     const tileMesh = cs380.Mesh.fromData(cs380.primitives.generateCube(0.9, 0.9, 0.9));
     this.thingsToClear.push(tileMesh);
     this.cubeTile = {
@@ -108,17 +109,17 @@ export default class Assignment2 extends cs380.BaseApp {
     }
     for (var i = 0; i < 3; i++) {
       for (var j = 0; j < 3; j++) {
-        this.cubeTile.F[i][j].transform.localPosition = [i - 1, j - 1, 1.1];
+        this.cubeTile.F[i][j].transform.localPosition = [i - 1, 1 - j, 1.1];
         this.cubeTile.F[i][j].uniforms.mainColor = [0, 1, 0];
         this.cubeTile.B[i][j].transform.localPosition = [1 - i, 1 - j, -1.1];
         this.cubeTile.B[i][j].uniforms.mainColor = [0, 0, 1];
-        this.cubeTile.U[i][j].transform.localPosition = [i - 1, 1.1, 1 - j];
+        this.cubeTile.U[i][j].transform.localPosition = [j - 1, 1.1, i - 1];
         this.cubeTile.U[i][j].uniforms.mainColor = [1, 1, 1];
-        this.cubeTile.D[i][j].transform.localPosition = [1 - i, -1.1, j - 1];
+        this.cubeTile.D[i][j].transform.localPosition = [j - 1, -1.1, 1 - i];
         this.cubeTile.D[i][j].uniforms.mainColor = [1, 1, 0];
-        this.cubeTile.L[i][j].transform.localPosition = [-1.1, 1 - j, i - 1];
+        this.cubeTile.L[i][j].transform.localPosition = [-1.1, 1 - i, j - 1];
         this.cubeTile.L[i][j].uniforms.mainColor = [1, 0.5, 0];
-        this.cubeTile.R[i][j].transform.localPosition = [1.1, 1 - j, i - 1];
+        this.cubeTile.R[i][j].transform.localPosition = [1.1, 1 - i, 1 - j];
         this.cubeTile.R[i][j].uniforms.mainColor = [1, 0, 0];
       }
     }
@@ -405,19 +406,21 @@ export default class Assignment2 extends cs380.BaseApp {
     console.log(`onMouseDown() got index ${index}`);
     this.mousePressed = true;
 
-    var x0 = (e.clientX - left - 660) / 200;
-    var y0 = (bottom - e.clientY - 400) / 200;
+    var x0 = (e.clientX - left - 400) / 300;
+    var y0 = (bottom - e.clientY - 400) / 300;
     this.prevArcballVector = this.xy2ArcballVec(x0, y0);
 
-    if (this.nextPoseList.length > 0) return;
-    if (index == 1) {
-      this.setLegLDPivot();
-      this.nextPoseList.push(
-        { pose: pose.jumpReady, interval: 0.5, lerpFunc: this.lerpLinear },
-        { pose: pose.jump, interval: 0.5, lerpFunc: this.lerpQuadratic2 },
-        { pose: pose.jumpReady, interval: 0.5, lerpFunc: this.lerpQuadratic1 },
-        { pose: pose.idle, interval: 0.5, lerpFunc: this.lerpLinear }
-      );
+    // pose
+    if (this.nextPoseList.length == 0) {
+      if (index == 1) {
+        this.setLegLDPivot();
+        this.nextPoseList.push(
+          { pose: pose.jumpReady, interval: 0.5, lerpFunc: this.lerpLinear },
+          { pose: pose.jump, interval: 0.5, lerpFunc: this.lerpQuadratic2 },
+          { pose: pose.jumpReady, interval: 0.5, lerpFunc: this.lerpQuadratic1 },
+          { pose: pose.idle, interval: 0.5, lerpFunc: this.lerpLinear }
+        );
+      }
     }
   }
 
@@ -433,8 +436,8 @@ export default class Assignment2 extends cs380.BaseApp {
     // my ball: radius of 300
     const { left, bottom } = gl.canvas.getBoundingClientRect();
 
-    var x = (e.clientX - left - 660) / 200;
-    var y = (bottom - e.clientY - 400) / 200;
+    var x = (e.clientX - left - 400) / 300;
+    var y = (bottom - e.clientY - 400) / 300;
     var v = this.xy2ArcballVec(x, y);
     var v0 = this.prevArcballVector;
 
