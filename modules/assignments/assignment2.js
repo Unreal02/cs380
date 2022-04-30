@@ -64,13 +64,6 @@ export default class Assignment2 extends cs380.BaseApp {
     addBackgroundComponent("bgD", 0, -5, 0);
     quat.rotateX(this.bgD.transform.localRotation, quat.create(), Math.PI / 2);
 
-    // stage
-    const stageMesh = cs380.Mesh.fromData(cs380.primitives.generateCube(2, 1.4, 2));
-    this.thingsToClear.push(stageMesh);
-    this.stage = new cs380.RenderObject(stageMesh, simpleShader);
-    this.stage.transform.localPosition = [0, -5, 0];
-    this.bgList.push(this.stage);
-
     // cube
     this.cubeList = [];
     const cubeMesh = cs380.Mesh.fromData(cs380.primitives.generateCube(3, 3, 3));
@@ -131,6 +124,19 @@ export default class Assignment2 extends cs380.BaseApp {
     const colorSkin = [255, 227, 181].map((i) => i / 255);
     const colorGray = [0.2, 0.2, 0.2];
 
+    // avatar
+    const avatarMesh = new cs380.Mesh();
+    this.thingsToClear.push(avatarMesh);
+    this.avatar = new cs380.RenderObject(avatarMesh, simpleShader);
+
+    // stage
+    const stageMesh = cs380.Mesh.fromData(cs380.primitives.generateCube(2, 1.4, 2));
+    this.thingsToClear.push(stageMesh);
+    this.stage = new cs380.RenderObject(stageMesh, simpleShader);
+    this.stage.transform.setParent(this.avatar.transform);
+    this.stage.transform.localPosition = [0, -5, 0];
+    this.bgList.push(this.stage);
+
     // add avatar inner component
     const addAvatarComponentInner = (innerName, name, mesh, innerPos, index, color = colorSkin) => {
       this[innerName] = new cs380.PickableObject(mesh, simpleShader, pickingShader, index);
@@ -163,6 +169,7 @@ export default class Assignment2 extends cs380.BaseApp {
     // body
     this.body = new cs380.RenderObject(bodyMesh, simpleShader);
     this.body.transform.localPosition = [0, 0, 0];
+    this.body.transform.setParent(this.avatar.transform);
     addAvatarComponentInner("body0", "body", bodyMesh, [0, 0, 0], 1);
     addAvatarComponentInner("body00", "body", body0Mesh, [0, -0.5, 0], 1, colorBlack);
     this.body00.transform.localScale = [1, 1, 0.7];
@@ -361,7 +368,14 @@ export default class Assignment2 extends cs380.BaseApp {
 
   onKeyDown(key) {
     console.log(`key down: ${key}`);
-    if (key == "0") this.arcballTarget.transform.localRotation = [0, 0, 0, 1];
+
+    if (key == "a") this.arcballTarget = this.avatar;
+    if (key == "c") this.arcballTarget = this.cube;
+
+    if (key == "0") {
+      this.setBodyPivot();
+      this.arcballTarget.transform.localRotation = [0, 0, 0, 1];
+    }
     if (this.nextPoseList.length > 0) return;
     if (key == "1") {
       this.setBodyPivot();
@@ -431,6 +445,8 @@ export default class Assignment2 extends cs380.BaseApp {
   // arcball
   onMouseMove(e) {
     if (!this.mousePressed) return;
+
+    if (this.arcballTarget == this.body) this.setBodyPivot();
 
     // x, y: value of -400 ~ 400
     // my ball: radius of 300
@@ -532,7 +548,7 @@ export default class Assignment2 extends cs380.BaseApp {
 
   setBodyPivot() {
     this.currPivot = "body";
-    this.body.transform.setParent(null);
+    this.body.transform.setParent(this.avatar.transform);
     this.body.transform.localPosition = [0, 0, 0];
     this.body0.transform.localPosition = [0, 0, 0];
     this.legLU.transform.setParent(this.body.transform);
@@ -546,7 +562,7 @@ export default class Assignment2 extends cs380.BaseApp {
 
   setLegLDPivot() {
     this.currPivot = "legLD";
-    this.legLD.transform.setParent(null);
+    this.legLD.transform.setParent(this.avatar.transform);
     this.legLD.transform.localPosition = [0.3, -4, 0];
     this.legLD0.transform.localPosition = [0, 1, 0];
     this.footL.transform.localPosition = [0, 0, 0];
