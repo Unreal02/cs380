@@ -50,7 +50,7 @@ export default class Assignment2 extends cs380.BaseApp {
       this[name] = new cs380.RenderObject(bgPlane, simpleShader);
       this[name].transform.setParent(this.background.transform);
       this[name].transform.localPosition = [x, y, z];
-      this[name].uniforms.mainColor = [0.5, 1, 1];
+      this[name].uniforms.mainColor = [0.5, 0.5, 0.5];
       this.bgList.push(this[name]);
     };
 
@@ -75,13 +75,53 @@ export default class Assignment2 extends cs380.BaseApp {
     this.cubeList = [];
     const cubeMesh = cs380.Mesh.fromData(cs380.primitives.generateCube(3, 3, 3));
     this.thingsToClear.push(cubeMesh);
-    this.cube = new cs380.RenderObject(cubeMesh, simpleShader);
+    this.cube = new cs380.PickableObject(cubeMesh, simpleShader, pickingShader, 100);
     this.cube.transform.localPosition = [5, 0, 0];
+    this.cube.transform.localScale = [0.7, 0.7, 0.7];
+    this.cube.uniforms.mainColor = [0, 0, 0];
     this.cubeList.push(this.cube);
 
-    const tileMesh = cs380.Mesh.fromData(cs380.primitives.generateCube(0.9, 0.9, 0.1));
+    const tileMesh = cs380.Mesh.fromData(cs380.primitives.generateCube(0.9, 0.9, 0.9));
     this.thingsToClear.push(tileMesh);
-    this.tileR = new cs380.PickableObject(tileMesh, simpleShader, pickingShader, 101);
+    this.cubeTile = {
+      F: [],
+      B: [],
+      U: [],
+      D: [],
+      L: [],
+      R: [],
+    };
+    for (var face in this.cubeTile) {
+      for (var i = 0; i < 3; i++) {
+        this.cubeTile[face][i] = [];
+        for (var j = 0; j < 3; j++) {
+          this.cubeTile[face][i][j] = new cs380.PickableObject(
+            tileMesh,
+            simpleShader,
+            pickingShader,
+            face.charCodeAt(0)
+          );
+          this.cubeTile[face][i][j].transform.setParent(this.cube.transform);
+          this.cubeList.push(this.cubeTile[face][i][j]);
+        }
+      }
+    }
+    for (var i = 0; i < 3; i++) {
+      for (var j = 0; j < 3; j++) {
+        this.cubeTile.F[i][j].transform.localPosition = [i - 1, j - 1, 1.1];
+        this.cubeTile.F[i][j].uniforms.mainColor = [0, 1, 0];
+        this.cubeTile.B[i][j].transform.localPosition = [1 - i, 1 - j, -1.1];
+        this.cubeTile.B[i][j].uniforms.mainColor = [0, 0, 1];
+        this.cubeTile.U[i][j].transform.localPosition = [i - 1, 1.1, 1 - j];
+        this.cubeTile.U[i][j].uniforms.mainColor = [1, 1, 1];
+        this.cubeTile.D[i][j].transform.localPosition = [1 - i, -1.1, j - 1];
+        this.cubeTile.D[i][j].uniforms.mainColor = [1, 1, 0];
+        this.cubeTile.L[i][j].transform.localPosition = [-1.1, 1 - j, i - 1];
+        this.cubeTile.L[i][j].uniforms.mainColor = [1, 0.5, 0];
+        this.cubeTile.R[i][j].transform.localPosition = [1.1, 1 - j, i - 1];
+        this.cubeTile.R[i][j].uniforms.mainColor = [1, 0, 0];
+      }
+    }
 
     // Avatar (pickable)
     this.avatarList = [];
@@ -365,10 +405,8 @@ export default class Assignment2 extends cs380.BaseApp {
     console.log(`onMouseDown() got index ${index}`);
     this.mousePressed = true;
 
-    console.log(x, y);
-
-    var x0 = (e.clientX - left - 400) / 300;
-    var y0 = (bottom - e.clientY - 400) / 300;
+    var x0 = (e.clientX - left - 660) / 200;
+    var y0 = (bottom - e.clientY - 400) / 200;
     this.prevArcballVector = this.xy2ArcballVec(x0, y0);
 
     if (this.nextPoseList.length > 0) return;
@@ -395,8 +433,8 @@ export default class Assignment2 extends cs380.BaseApp {
     // my ball: radius of 300
     const { left, bottom } = gl.canvas.getBoundingClientRect();
 
-    var x = (e.clientX - left - 400) / 300;
-    var y = (bottom - e.clientY - 400) / 300;
+    var x = (e.clientX - left - 660) / 200;
+    var y = (bottom - e.clientY - 400) / 200;
     var v = this.xy2ArcballVec(x, y);
     var v0 = this.prevArcballVector;
 
@@ -473,6 +511,7 @@ export default class Assignment2 extends cs380.BaseApp {
 
     // renderPicking() here
     this.avatarList.forEach((i) => i.renderPicking(this.camera));
+    this.cubeList.forEach((i) => i.renderPicking(this.camera));
 
     // Render real scene
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
