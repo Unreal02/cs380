@@ -10,7 +10,7 @@ import {
   generateCube,
   generateCylinder,
   generateHemisphere,
-  generateQuaterSphere,
+  generateQuarterSphere,
   generatePlane,
   generateSphere,
   generateUpperBody,
@@ -47,7 +47,7 @@ export default class Assignment2 extends cs380.BaseApp {
     this.bgList = [];
 
     // add background component
-    const addBackgroundComponent = (name, x, y, z) => {
+    const addBackgroundComponent = (name, x, y, z, color) => {
       this[name] = new cs380.RenderObject(bgPlane, simpleShader);
       this[name].transform.setParent(this.background.transform);
       this[name].transform.localPosition = [x, y, z];
@@ -183,28 +183,26 @@ export default class Assignment2 extends cs380.BaseApp {
     const headMesh = new cs380.Mesh();
     const head0Mesh = cs380.Mesh.fromData(generateSphere(0.5));
     const hairMesh = cs380.Mesh.fromData(generateHemisphere(0.51));
-    const eyeMesh = cs380.Mesh.fromData(generateCube(0.1, 0.1, 0.1));
+    const eyeMesh = cs380.Mesh.fromData(generateCube(0.12, 0.15, 0.1));
     this.thingsToClear.push(headMesh, head0Mesh);
     addAvatarComponent("head", headMesh, [0, 3.5, 0], [0, 0, 0], 2, this.body);
     addAvatarComponentInner("head0", "head", headMesh, [0, 0, 0], 2);
     addAvatarComponentInner("head00", "head0", head0Mesh, [0, 0, 0], 2);
-    addAvatarComponentInner("head01", "head0", hairMesh, [0, 0, 0], 2, colorBlack);
-    addAvatarComponentInner("head02", "head0", hairMesh, [0, 0, 0], 2, colorBlack);
-    addAvatarComponentInner("head03", "head0", eyeMesh, [-0.2, 0, 0.43], 2, colorBlack);
-    addAvatarComponentInner("head04", "head0", eyeMesh, [0.2, 0, 0.43], 2, colorBlack);
+    addAvatarComponentInner("hair0", "head0", hairMesh, [0, 0, 0], 2, colorBlack);
+    addAvatarComponentInner("hair1", "head0", hairMesh, [0, 0, 0], 2, colorBlack);
+    addAvatarComponentInner("eye0", "head0", eyeMesh, [-0.2, 0, 0.43], 2, colorBlack);
+    addAvatarComponentInner("eye1", "head0", eyeMesh, [0.2, 0, 0.43], 2, colorBlack);
     this.head0.transform.localScale = [0.8, 1, 0.8];
-    this.head01.transform.localRotation = quat.fromEuler(quat.create(), -45, 45, 0);
-    this.head02.transform.localRotation = quat.fromEuler(quat.create(), -45, -45, 0);
-    this.head03.transform.localRotation = quat.fromEuler(quat.create(), 0, 180, 0);
-    this.head04.transform.localRotation = quat.fromEuler(quat.create(), 0, 180, 0);
-    this.head03.transform.localScale = [1.25, 1, 1.25];
-    this.head04.transform.localScale = [1.25, 1, 1.25];
+    this.hair0.transform.localRotation = quat.fromEuler(quat.create(), -45, 45, 0);
+    this.hair1.transform.localRotation = quat.fromEuler(quat.create(), -45, -45, 0);
+    this.eye0.transform.localRotation = quat.fromEuler(quat.create(), 0, 180, 0);
+    this.eye1.transform.localRotation = quat.fromEuler(quat.create(), 0, 180, 0);
 
     // leg and arm mesh
     const legMesh = cs380.Mesh.fromData(generateCapsule(0.25, 2));
     const armMesh = cs380.Mesh.fromData(generateCapsule(0.15, 1.3));
     const footMesh = new cs380.Mesh();
-    const foot01Mesh = cs380.Mesh.fromData(generateQuaterSphere(0.3));
+    const foot01Mesh = cs380.Mesh.fromData(generateQuarterSphere(0.3));
     this.thingsToClear.push(legMesh, armMesh, footMesh, foot01Mesh);
 
     // leg
@@ -347,6 +345,17 @@ export default class Assignment2 extends cs380.BaseApp {
 
     document.getElementById("settings").innerHTML = `
       <div>
+      <label for="poseLerpFunc">pose transition function</label>
+      <input type="radio" id="poseLerpFunc1" name="poseLerpFunc" value="linear" checked>
+      <label for="poseLerpFunc1">linear</label>
+      <input type="radio" id="poseLerpFunc2" name="poseLerpFunc" value="quadratic1">
+      <label for="poseLerpFunc2">quadratic1</label>
+      <input type="radio" id="poseLerpFunc3" name="poseLerpFunc" value="quadratic2">
+      <label for="poseLerpFunc3">quadratic2</label>
+      <input type="radio" id="poseLerpFunc4" name="poseLerpFunc" value="sin">
+      <label for="poseLerpFunc4">sin</label>
+      </div>
+      <div>
       <label for="pose1Time">Pose1 Time (0.1~2)</label>
       <input type="range" id="pose1Time" value="0.5" min="0.1" max="2" step="any">
       </div>
@@ -362,12 +371,26 @@ export default class Assignment2 extends cs380.BaseApp {
       <label for="jumpTime">Jump Time (0.1~2)</label>
       <input type="range" id="jumpTime" value="0.5" min="0.1" max="2" step="any">
       </div>
+      <div>
+      '1' key => pose1 || '2' key => pose2 || click body => jump
+      </div>
+      <div>
+      'a' key => rotate avatar || 'c' key => rotate cube || '0' key => initialize rotation
+      </div>
     `;
-    this.pose1Time = 0.5;
-    this.pose2Time = 0.5;
-    this.jumpreadyTime = 0.5;
-    this.jumpTime = 0.5;
 
+    cs380.utils.setInputBehavior("poseLerpFunc1", (val) => {
+      this.poseLerpFunc = this.lerpLinear;
+    });
+    cs380.utils.setInputBehavior("poseLerpFunc2", (val) => {
+      this.poseLerpFunc = this.lerpQuadratic1;
+    });
+    cs380.utils.setInputBehavior("poseLerpFunc3", (val) => {
+      this.poseLerpFunc = this.lerpQuadratic2;
+    });
+    cs380.utils.setInputBehavior("poseLerpFunc4", (val) => {
+      this.poseLerpFunc = this.lerpSin;
+    });
     cs380.utils.setInputBehavior("pose1Time", (val) => {
       this.pose1Time = val;
     });
@@ -380,6 +403,11 @@ export default class Assignment2 extends cs380.BaseApp {
     cs380.utils.setInputBehavior("jumpTime", (val) => {
       this.jumpTime = val;
     });
+    this.pose1Time = 0.5;
+    this.pose2Time = 0.5;
+    this.jumpreadyTime = 0.5;
+    this.jumpTime = 0.5;
+    this.poseLerpFunc = this.lerpLinear;
 
     // GL settings
     gl.enable(gl.CULL_FACE);
@@ -403,7 +431,7 @@ export default class Assignment2 extends cs380.BaseApp {
       this.nextPoseList.push({
         pose: pose.pose1,
         interval: this.pose1Time,
-        lerpFunc: this.lerpLinear,
+        lerpFunc: this.poseLerpFunc,
       });
     }
     if (key == "2") {
@@ -411,7 +439,7 @@ export default class Assignment2 extends cs380.BaseApp {
       this.nextPoseList.push({
         pose: pose.pose2,
         interval: this.pose2Time,
-        lerpFunc: this.lerpLinear,
+        lerpFunc: this.poseLerpFunc,
       });
     }
   }
@@ -423,14 +451,14 @@ export default class Assignment2 extends cs380.BaseApp {
       this.nextPoseList.push({
         pose: pose.idle,
         interval: this.pose1Time,
-        lerpFunc: this.lerpLinear,
+        lerpFunc: this.poseLerpFunc,
       });
     }
     if (key == "2") {
       this.nextPoseList.push({
         pose: pose.idle,
         interval: this.pose2Time,
-        lerpFunc: this.lerpLinear,
+        lerpFunc: this.poseLerpFunc,
       });
     }
   }
@@ -466,10 +494,10 @@ export default class Assignment2 extends cs380.BaseApp {
       if (index == 1) {
         this.setLegLDPivot();
         this.nextPoseList.push(
-          { pose: pose.jumpReady, interval: this.jumpreadyTime, lerpFunc: this.lerpLinear },
+          { pose: pose.jumpReady, interval: this.jumpreadyTime, lerpFunc: this.poseLerpFunc },
           { pose: pose.jump, interval: this.jumpTime, lerpFunc: this.lerpQuadratic2 },
           { pose: pose.jumpReady, interval: this.jumpTime, lerpFunc: this.lerpQuadratic1 },
-          { pose: pose.idle, interval: this.jumpreadyTime, lerpFunc: this.lerpLinear }
+          { pose: pose.idle, interval: this.jumpreadyTime, lerpFunc: this.poseLerpFunc }
         );
       }
     }
@@ -629,20 +657,20 @@ export default class Assignment2 extends cs380.BaseApp {
   lerpLinear(x) {
     return x;
   }
-
   lerpQuadratic1(x) {
     return x * x;
   }
-
   lerpQuadratic2(x) {
     return -x * x + 2 * x;
   }
+  lerpSin(x) {
+    return Math.sin((x - 0.5) * Math.PI) / 2 + 0.5;
+  }
+  poseLerpFunc;
 
   currPivot;
   currPose;
   nextPoseList = [];
-  intervalList = [];
-  lerpFuncList = [];
   changePoseTime = 0;
   arcballTarget;
 }

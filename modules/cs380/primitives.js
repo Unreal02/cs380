@@ -271,7 +271,7 @@ export function generateCapsule(radius = 1, height = 1, sides = 64) {
   return data;
 }
 
-export function generateQuaterSphere(radius) {
+export function generateQuarterSphere(radius) {
   const data = {
     vertices: [],
     vertexNormals: [],
