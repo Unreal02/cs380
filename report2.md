@@ -21,8 +21,8 @@ A cone has two parts, bottom and side.
   Side is set of lines connecting top point and a point on the bottom circle. Generating side is similar to generating bottom, except calculating normal vector. I assigned normal vector for each point in polygon. Assume each polygon has three points: `p0`(top point), `p1, p2`(on circumference). Let `p12` be the center of arc connecting `p1` and `p2`.
 
   - normal vector of `p0`: perpendicular to the line `p0-p12`
-  - normal vector of `p1`: perpendicular to the line `p0-p12`
-  - normal vector of `p2`: perpendicular to the line `p0-p12`
+  - normal vector of `p1`: perpendicular to the line `p0-p1`
+  - normal vector of `p2`: perpendicular to the line `p0-p2`
 
   Additionally, for every `p0`, `p1` and `p2`, the angle between normal vector and xz-plane is the angle between y-axis and line `p0-p1`(or line `p0-p2`).
 
@@ -114,13 +114,13 @@ My avatar has body, head, arms, hands, fingers, legs, and feet.
 
 My avatar has following parts.
 
-- body (index 1)
-- head (index 2)
-- armLU, armRU, armLD, armRD (index 3, 4, 5, 6)
-- footL, footR (index 7, 8)
-- legLU, legRU, legLD, legRD (index 9, 10, 11, 12)
-- handL, handR (index 13, 14)
-- fingerLXY, fingerRXY: X has value of 1~5. if X is 1, then Y is 0 or 1. Otherwise, Y is 0, 1, or 2. (index 13 for fingerLXY, index 14 for fingerRXY)
+- body (index 1) complex meshes
+- head (index 2) combination of primitives
+- armLU, armRU, armLD, armRD (index 3, 4, 5, 6) capsule
+- footL, footR (index 7, 8) two quarter spheres
+- legLU, legRU, legLD, legRD (index 9, 10, 11, 12) capsule
+- handL, handR (index 13, 14) combination of primitives
+- fingerLXY, fingerRXY: X has value of 1~5. if X is 1, then Y is 0 or 1. Otherwise, Y is 0, 1, or 2. (index 13 for fingerLXY, index 14 for fingerRXY) capsule
 
 ### Hierarchy Structure
 
@@ -158,7 +158,7 @@ Hierarchical structure of `body`, `legLU`, `legLD` is changed.
 - before: body -> legLU -> legLD
 - after: legLD -> legLU -> body
 
-Parent-child relation of other parts aren't change.
+Parent-child relation of other parts don't change.
 
 ### Inner Implementation
 
@@ -241,16 +241,20 @@ These are how to interact with avatar.
 - If click avatar's body(index `1`), avatar jumps.
 - Below the screen, you can change time for make each pose.
 
-`pose1`
+`pose1`: `body` is root of hierarchy.
+
 ![img2](./images/report2_2.png)
 
-`pose2`
+`pose2`: `legLD` is root of hierarchy.
+
 ![img3](./images/report2_3.png)
 
-`jumpReady`
+`jumpReady`: `legLD` is root of hierarchy.
+
 ![img4](./images/report2_4.png)
 
-`jump`
+`jump`: `legLD` is root of hierarchy.
+
 ![img5](./images/report2_5.png)
 
 ## Advanced Keyframe-based 3D Animation
