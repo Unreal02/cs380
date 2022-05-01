@@ -53,7 +53,7 @@ export const idle = {
   },
 };
 
-export const hello1 = {
+export const pose1 = {
   camera: {
     position: [0, 0, 25],
     rotation: [0, 0, 0],
@@ -85,7 +85,7 @@ export const hello1 = {
   },
 };
 
-export const hello2 = {
+export const pose2 = {
   camera: {
     position: [-12, 2, 16],
     rotation: [-5.711, -36.87, 0],

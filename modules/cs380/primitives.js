@@ -350,3 +350,67 @@ export function generateHemisphere(radius) {
 
   return data;
 }
+
+export function generateUpperBody(sides = 64) {
+  const data = {
+    vertices: [],
+    vertexNormals: [],
+    textures: [],
+    indices: [],
+  };
+
+  const angle2ellipse = (theta, a, b) => {
+    var x = Math.sqrt(1 / (1 / Math.pow(a, 2) + Math.pow(Math.tan(theta), 2) / Math.pow(b, 2)));
+    var z = x * Math.abs(Math.tan(theta));
+    if (theta >= (Math.PI * 3) / 2) {
+      z = -z;
+    } else if (theta >= Math.PI) {
+      x = -x;
+      z = -z;
+    } else if (theta >= Math.PI / 2) {
+      x = -x;
+    }
+    return [x, 0, z];
+  };
+
+  for (var i = 0; i < sides; i++) {
+    const theta = (i * 2 * Math.PI) / sides;
+    const theta_ = ((i + 1) * 2 * Math.PI) / sides;
+    const p0 = angle2ellipse(theta, 0.5, 0.35);
+    const p1 = angle2ellipse(theta_, 0.5, 0.35);
+    const p2 = vec3.add(vec3.create(), angle2ellipse(theta, 0.8, 0.4), [0, 1.2, 0]);
+    const p3 = vec3.add(vec3.create(), angle2ellipse(theta_, 0.8, 0.4), [0, 1.2, 0]);
+    const angle02 = Math.acos(1.2 / vec3.distance(p0, p2));
+    const angle13 = Math.acos(1.2 / vec3.distance(p1, p3));
+    const n0_ = vec3.normalize(vec3.create(), [
+      Math.pow(0.35, 2) * p0[0],
+      0,
+      Math.pow(0.5, 2) * p0[2],
+    ]);
+    const n1_ = vec3.normalize(vec3.create(), [
+      Math.pow(0.35, 2) * p1[0],
+      0,
+      Math.pow(0.5, 2) * p1[2],
+    ]);
+    const n2_ = vec3.normalize(vec3.create(), [
+      Math.pow(0.4, 2) * p2[0],
+      0,
+      Math.pow(0.8, 2) * p2[2],
+    ]);
+    const n3_ = vec3.normalize(vec3.create(), [
+      Math.pow(0.4, 2) * p3[0],
+      0,
+      Math.pow(0.8, 2) * p3[2],
+    ]);
+    const n0 = [Math.cos(angle02) * n0_[0], -Math.sin(angle02), Math.cos(angle02) * n0_[2]];
+    const n1 = [Math.cos(angle13) * n1_[0], -Math.sin(angle13), Math.cos(angle13) * n1_[2]];
+    const n2 = [Math.cos(angle02) * n2_[0], -Math.sin(angle02), Math.cos(angle02) * n2_[2]];
+    const n3 = [Math.cos(angle13) * n3_[0], -Math.sin(angle13), Math.cos(angle13) * n3_[2]];
+    data.vertices.push(...p0, ...p2, ...p1);
+    data.vertices.push(...p1, ...p2, ...p3);
+    data.vertexNormals.push(...n0, ...n2, ...n1);
+    data.vertexNormals.push(...n1, ...n2, ...n3);
+  }
+
+  return data;
+}
