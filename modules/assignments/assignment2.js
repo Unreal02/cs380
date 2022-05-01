@@ -172,7 +172,7 @@ export default class Assignment2 extends cs380.BaseApp {
     this.body.transform.localPosition = [0, 0, 0];
     this.body.transform.setParent(this.avatar.transform);
     addAvatarComponentInner("body0", "body", bodyMesh, [0, 0, 0], 1);
-    addAvatarComponentInner("body00", "body", body0Mesh, [0, -0.5, 0], 1, colorBlack);
+    addAvatarComponentInner("body00", "body0", body0Mesh, [0, -0.5, 0], 1, colorBlack);
     this.body00.transform.localScale = [1, 1, 0.7];
     addAvatarComponentInner("body01", "body0", body1Mesh, [0, 1.5, 0], 1, colorBlue);
     addAvatarComponentInner("body02", "body0", body2Mesh, [0, 2.7, 0], 1, colorBlue);
