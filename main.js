@@ -6,9 +6,11 @@ import Lab1App from "./modules/labs/lab1.js";
 import Lab2App from "./modules/labs/lab2.js";
 import Lab4App from "./modules/labs/lab4.js";
 import Lab5App from "./modules/labs/lab5.js";
+import Lab6App from "./modules/labs/lab6.js";
 
 import Assignment1 from "./modules/assignments/assignment1.js";
 import Assignment2 from "./modules/assignments/assignment2.js";
+import Assignment3 from "./modules/assignments/assignment3.js";
 
 /*
     WebGL app list whose entries are shown above gl canvas.
@@ -44,6 +46,10 @@ const apps = {
     app: Lab5App,
     title: "Lab 5",
   },
+  lab6: {
+    app: Lab6App,
+    title: "Lab 6",
+  },
   assignment1: {
     app: Assignment1,
     title: "Assignment 1",
@@ -52,10 +58,14 @@ const apps = {
     app: Assignment2,
     title: "Assignment 2",
   },
+  assignment3: {
+    app: Assignment3,
+    title: "Assignment 3",
+  },
 };
 
 // Key of the very first app once you access localhost:8000
-const defaultApp = "assignment2";
+const defaultApp = "lab6";
 
 function main() {
   const canvas = document.querySelector("#glcanvas");
