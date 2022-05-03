@@ -44,6 +44,16 @@ void main() {
         
         if (lights[i].type == DIRECTIONAL) {
             // TODO: implement diffuse and specular reflections for directional light
+
+            // diffuse
+            vec3 L = -normalize(lights[i].dir);
+            intensity += max(dot(N, L) * lights[i].illuminance, 0.0f) * mainColor;
+
+            // specular
+            vec3 V = normalize(vec4(0, 0, 0, 1) * W2C - frag_pos).xyz;
+            vec3 H = normalize(L + V);
+            float psi = dot(N, H);
+            intensity += lights[i].illuminance * max(pow(psi, 300.0f), 0.0f) * mainColor;
         }
         else if (lights[i].type == POINT) {
             continue;
@@ -53,6 +63,7 @@ void main() {
         }
         else if (lights[i].type == AMBIENT) {
             // TODO: implement ambient reflection
+            intensity += lights[i].illuminance * mainColor;
         }
     }
     

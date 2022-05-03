@@ -13,25 +13,14 @@ export default class Lab6App extends cs380.BaseApp {
     const aspectRatio = width / height;
     this.camera = new cs380.Camera();
     vec3.set(this.camera.transform.localPosition, 0, 0, 8);
-    mat4.perspective(
-      this.camera.projectionMatrix,
-      glMatrix.toRadian(45),
-      aspectRatio,
-      0.01,
-      100
-    )
-    ;
+    mat4.perspective(this.camera.projectionMatrix, glMatrix.toRadian(45), aspectRatio, 0.01, 100);
 
     // things to finalize()
     this.thingsToClear = [];
 
-    
     // SimpleOrbitControl
     const orbitControlCenter = vec3.fromValues(0, 0, 0);
-    this.simpleOrbitControl = new cs380.utils.SimpleOrbitControl(
-      this.camera,
-      orbitControlCenter
-    );
+    this.simpleOrbitControl = new cs380.utils.SimpleOrbitControl(this.camera, orbitControlCenter);
     this.thingsToClear.push(this.simpleOrbitControl);
 
     // generate a sphere
@@ -39,14 +28,20 @@ export default class Lab6App extends cs380.BaseApp {
     const sphereMesh = cs380.Mesh.fromData(sphereMeshData);
 
     // TODO: import a mesh model
+    const bunnyLoadResult = await cs380.MeshLoader.load({
+      bunny: "resources/models/bunny.obj",
+    });
+    const bunnyMesh = cs380.Mesh.fromData(bunnyLoadResult.bunny);
 
     const simpleShader = await cs380.buildShader(SimpleShader);
     // TODO: import BlinnPhongShader
+    const blinnPhongShader = await cs380.buildShader(BlinnPhongShader);
 
     this.thingsToClear.push(sphereMesh);
     this.thingsToClear.push(simpleShader);
-    this.thingsToClear.push(/*mesh & shader...*/);
-    
+    this.thingsToClear.push(blinnPhongShader);
+    this.thingsToClear.push(bunnyMesh);
+
     // initialize picking shader & buffer
     const pickingShader = await cs380.buildShader(cs380.PickingShader);
     this.pickingBuffer = new cs380.PickingBuffer();
@@ -57,7 +52,7 @@ export default class Lab6App extends cs380.BaseApp {
     this.lights = [];
     const lightDir = vec3.create();
 
-    const light0 = new Light(); 
+    const light0 = new Light();
     light0.illuminance = 0.1;
     light0.type = LightType.AMBIENT;
     this.lights.push(light0);
@@ -68,20 +63,19 @@ export default class Lab6App extends cs380.BaseApp {
     light1.transform.lookAt(lightDir);
     light1.type = LightType.DIRECTIONAL;
     this.lights.push(light1);
-    
+
     // initialize a sphere Object
-    this.sphere = new cs380.PickableObject(
-        sphereMesh, 
-        simpleShader,
-        pickingShader,
-        1
-    );
+    this.sphere = new cs380.PickableObject(sphereMesh, blinnPhongShader, pickingShader, 1);
     vec3.set(this.sphere.transform.localPosition, -1.2, 0, 0);
     vec3.set(this.sphere.transform.localScale, 0.7, 0.7, 0.7);
-    this.sphere.uniforms.lights = this.lights; 
+    this.sphere.uniforms.lights = this.lights;
 
     // TODO: initialize PickableObject or RenderObject for the imported model
-    
+    this.bunny = new cs380.PickableObject(bunnyMesh, blinnPhongShader, pickingShader, 2);
+    vec3.set(this.bunny.transform.localPosition, 1.2, 0, 0);
+    vec3.set(this.bunny.transform.localScale, 0.7, 0.7, 0.7);
+    this.bunny.uniforms.lights = this.lights;
+
     // Event listener for interactions
     this.handleMouseDown = (e) => {
       // e.button = 0 if it is left mouse button
@@ -104,12 +98,11 @@ export default class Lab6App extends cs380.BaseApp {
         </li>
       </ul>
     `;
-    
+
     // Setup GUIs
     const setInputBehavior = (id, onchange, initialize, callback) => {
       const input = document.getElementById(id);
-      const callbackWrapper = 
-          () => callback(input.value); // NOTE: must parse to int/float for numeric values
+      const callbackWrapper = () => callback(input.value); // NOTE: must parse to int/float for numeric values
       if (onchange) {
         input.onchange = callbackWrapper;
         if (initialize) input.onchange();
@@ -117,12 +110,14 @@ export default class Lab6App extends cs380.BaseApp {
         input.oninput = callbackWrapper;
         if (initialize) input.oninput();
       }
-    }
-    setInputBehavior('setting-ambient', true, true,
-        (val) => { this.lights[0].illuminance=val;});
-    setInputBehavior('setting-illuminance', true, true,
-        (val) => { this.lights[1].illuminance=val;});
-    
+    };
+    setInputBehavior("setting-ambient", true, true, (val) => {
+      this.lights[0].illuminance = val;
+    });
+    setInputBehavior("setting-illuminance", true, true, (val) => {
+      this.lights[1].illuminance = val;
+    });
+
     // GL settings
     gl.enable(gl.CULL_FACE);
     gl.cullFace(gl.BACK);
@@ -140,7 +135,7 @@ export default class Lab6App extends cs380.BaseApp {
     // write down your code for interactoins
     console.log(`onMouseDown() got index ${index}`);
   }
-  
+
   finalize() {
     gl.canvas.removeEventListener("mousedown", this.handleMouseDown);
     this.thingsToClear.forEach((it) => it.finalize());
@@ -160,6 +155,7 @@ export default class Lab6App extends cs380.BaseApp {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     this.sphere.renderPicking(this.camera);
+    this.bunny.renderPicking(this.camera);
 
     // 2. Render real scene
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -168,7 +164,8 @@ export default class Lab6App extends cs380.BaseApp {
     gl.enable(gl.DEPTH_TEST);
     gl.depthFunc(gl.LEQUAL);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    
+
     this.sphere.render(this.camera);
+    this.bunny.render(this.camera);
   }
 }
