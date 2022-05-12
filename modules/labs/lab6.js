@@ -53,13 +53,13 @@ export default class Lab6App extends cs380.BaseApp {
     const lightDir = vec3.create();
 
     const light0 = new Light();
-    light0.illuminance = 0.1;
+    light0.illuminance = [0.1, 0.1, 0.1];
     light0.type = LightType.AMBIENT;
     this.lights.push(light0);
 
     const light1 = new Light();
     vec3.set(lightDir, -1, -1, -1);
-    light1.illuminance = 0.9;
+    light1.illuminance = [0.9, 0.9, 0.9];
     light1.transform.lookAt(lightDir);
     light1.type = LightType.DIRECTIONAL;
     this.lights.push(light1);
@@ -112,10 +112,12 @@ export default class Lab6App extends cs380.BaseApp {
       }
     };
     setInputBehavior("setting-ambient", true, true, (val) => {
-      this.lights[0].illuminance = val;
+      val = Number(val);
+      this.lights[0].illuminance = [val, val, val];
     });
     setInputBehavior("setting-illuminance", true, true, (val) => {
-      this.lights[1].illuminance = val;
+      val = Number(val);
+      this.lights[1].illuminance = [val / 2, val / 2, val];
     });
 
     // GL settings

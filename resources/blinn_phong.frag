@@ -20,7 +20,7 @@ struct Light {
     bool enabled;
     vec3 pos;
     vec3 dir;
-    float illuminance;
+    vec3 illuminance;
     float angle;
     float angleSmoothness;
 };
@@ -46,14 +46,14 @@ void main() {
             // TODO: implement diffuse and specular reflections for directional light
 
             // diffuse
-            vec3 L = -normalize(lights[i].dir);
-            intensity += max(dot(N, L) * lights[i].illuminance, 0.0f) * mainColor;
+            vec3 L = -normalize(vec3(W2C * vec4(lights[i].dir, 0.0)));
+            intensity += max(dot(N, L), 0.0) * lights[i].illuminance * mainColor;
 
             // specular
             vec3 V = normalize(vec4(0, 0, 0, 1) * W2C - frag_pos).xyz;
             vec3 H = normalize(L + V);
             float psi = dot(N, H);
-            intensity += lights[i].illuminance * max(pow(psi, 300.0f), 0.0f) * mainColor;
+            intensity += max(pow(max(psi, 0.0), 300.0), 0.0) * lights[i].illuminance * mainColor;
         }
         else if (lights[i].type == POINT) {
             continue;
