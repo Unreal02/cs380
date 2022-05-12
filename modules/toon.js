@@ -1,8 +1,8 @@
-import gl from "./gl.js";
+import gl from './gl.js'
 
-import { vec3, vec4 } from "./cs380/gl-matrix.js";
+import { vec3, vec4 } from "./cs380/gl-matrix.js"
 
-import * as cs380 from "./cs380/cs380.js";
+import * as cs380 from './cs380/cs380.js'
 
 export const LightType = {
   DIRECTIONAL: 0,
@@ -16,14 +16,14 @@ export class Light {
     this.transform = new cs380.Transform();
     this.type = LightType.DIRECTIONAL;
     this.enabled = true;
-    this.illuminance = [1, 1, 1];
+    this.illuminance = 1;
     this.angle = Math.PI / 6;
     this.angleSmoothness = 0.1;
     this._v3 = vec3.create();
     this._v4 = vec4.create();
   }
 
-  get pos() {
+  get pos(){
     vec3.set(this._v3, 0, 0, 0);
     vec3.transformMat4(this._v3, this._v3, this.transform.worldMatrix);
     return this._v3;
@@ -37,12 +37,12 @@ export class Light {
   }
 }
 
-export class BlinnPhongShader extends cs380.BaseShader {
+export class ToonShader extends cs380.BaseShader {
   static get source() {
     // Define shader codes here
     return [
-      [gl.VERTEX_SHADER, "resources/blinn_phong.vert"],
-      [gl.FRAGMENT_SHADER, "resources/blinn_phong.frag"],
+      [gl.VERTEX_SHADER, "resources/toon.vert"],
+      [gl.FRAGMENT_SHADER, "resources/toon.frag"],
     ];
   }
 
@@ -67,34 +67,29 @@ export class BlinnPhongShader extends cs380.BaseShader {
     // Set shader-specific uniforms here
     this.setUniformVec3(kv, "mainColor", 1, 1, 1);
 
-    if ("lights" in kv) {
-      const lights = kv["lights"];
-      const lightProperties = [
-        "type",
-        "enabled",
-        "pos",
-        "illuminance",
-        "dir",
-        "angle",
-        "angleSmoothness",
-      ];
+    if ('lights' in kv) {
+      const lights = kv['lights'];
+      const lightProperties = ['type', 'enabled', 'pos', 'illuminance', 'dir', 'angle', 'angleSmoothness'];
       const numLights = Math.min(lights.length, 10);
       gl.uniform1i(this.uniformLocations.numLights, numLights);
-      for (let i = 0; i < numLights; i++) {
+      for (let i=0; i < numLights; i++) {
         const light = lights[i];
-        const locations = lightProperties.reduce((obj, x) => {
-          obj[x] = gl.getUniformLocation(this.program, `lights[${i}].${x}`);
-          return obj;
-        }, {});
+        const locations = lightProperties.reduce(
+            (obj, x) => {
+              obj[x] = gl.getUniformLocation(this.program, `lights[${i}].${x}`);
+              return obj;
+            }, {}
+        );
         gl.uniform1i(locations.type, light.type);
         gl.uniform1i(locations.enabled, light.enabled);
         gl.uniform3f(locations.pos, ...light.pos);
         gl.uniform3f(locations.dir, ...light.dir);
-        gl.uniform3f(locations.illuminance, ...light.illuminance);
+        gl.uniform1f(locations.illuminance, light.illuminance);
         gl.uniform1f(locations.angle, light.angle);
         gl.uniform1f(locations.angleSmoothness, light.angleSmoothness);
       }
-    } else {
+    }
+    else {
       gl.uniform1i(this.uniformLocations.numLights, 0);
     }
   }
