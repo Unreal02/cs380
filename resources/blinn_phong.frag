@@ -56,7 +56,18 @@ void main() {
             intensity += max(pow(max(psi, 0.0), 300.0), 0.0) * lights[i].illuminance * mainColor;
         }
         else if (lights[i].type == POINT) {
-            continue;
+            vec3 pos = (W2C * vec4(lights[i].pos, 1.0)).xyz;
+            float distance = length(pos - frag_pos.xyz);
+
+            // diffuse
+            vec3 L = normalize(pos - frag_pos.xyz);
+            intensity += (1.0 / (distance * distance)) * max(dot(N, L), 0.0) * lights[i].illuminance * mainColor;
+
+            // specular
+            vec3 V = normalize(vec4(0, 0, 0, 1) * W2C - frag_pos).xyz;
+            vec3 H = normalize(L + V);
+            float psi = dot(N, H);
+            intensity += (1.0 / (distance * distance)) * max(pow(max(psi, 0.0), 300.0), 0.0) * lights[i].illuminance * mainColor;
         }
         else if (lights[i].type == SPOTLIGHT) {
             continue;

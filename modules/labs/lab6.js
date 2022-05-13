@@ -61,7 +61,7 @@ export default class Lab6App extends cs380.BaseApp {
     vec3.set(lightDir, -1, -1, -1);
     light1.illuminance = [0.9, 0.9, 0.9];
     light1.transform.lookAt(lightDir);
-    light1.type = LightType.DIRECTIONAL;
+    light1.type = LightType.POINT;
     this.lights.push(light1);
 
     // initialize a sphere Object
@@ -117,7 +117,7 @@ export default class Lab6App extends cs380.BaseApp {
     });
     setInputBehavior("setting-illuminance", true, true, (val) => {
       val = Number(val);
-      this.lights[1].illuminance = [val / 2, val / 2, val];
+      this.lights[1].illuminance = [val, val, val];
     });
 
     // GL settings
