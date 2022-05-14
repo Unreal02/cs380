@@ -5,6 +5,7 @@ import * as cs380 from "../cs380/cs380.js";
 
 import { SimpleShader } from "../simple_shader.js";
 import { LightType, Light, BlinnPhongShader } from "../blinn_phong.js";
+import { generatePlane } from "../cs380/primitives.js";
 
 export default class Lab6App extends cs380.BaseApp {
   async initialize() {
@@ -58,10 +59,12 @@ export default class Lab6App extends cs380.BaseApp {
     this.lights.push(light0);
 
     const light1 = new Light();
-    vec3.set(lightDir, -1, -1, -1);
+    vec3.set(lightDir, 0, -1, 0);
     light1.illuminance = [0.9, 0.9, 0.9];
-    light1.transform.lookAt(lightDir);
-    light1.type = LightType.POINT;
+    light1.transform.localRotation = quat.fromEuler(quat.create(), 90, 0, 0);
+    light1.type = LightType.SPOTLIGHT;
+    light1.transform.localPosition = [0, 2, 0];
+    light1.angle = Math.PI / 6;
     this.lights.push(light1);
 
     // initialize a sphere Object
@@ -75,6 +78,16 @@ export default class Lab6App extends cs380.BaseApp {
     vec3.set(this.bunny.transform.localPosition, 1.2, 0, 0);
     vec3.set(this.bunny.transform.localScale, 0.7, 0.7, 0.7);
     this.bunny.uniforms.lights = this.lights;
+
+    this.plane = new cs380.PickableObject(
+      cs380.Mesh.fromData(generatePlane(10, 10)),
+      blinnPhongShader,
+      pickingShader,
+      3
+    );
+    vec3.set(this.plane.transform.localPosition, 0, -1, 0);
+    quat.rotateX(this.plane.transform.localRotation, quat.create(), Math.PI / 2);
+    this.plane.uniforms.lights = this.lights;
 
     // Event listener for interactions
     this.handleMouseDown = (e) => {
@@ -158,6 +171,7 @@ export default class Lab6App extends cs380.BaseApp {
 
     this.sphere.renderPicking(this.camera);
     this.bunny.renderPicking(this.camera);
+    this.plane.renderPicking(this.camera);
 
     // 2. Render real scene
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -169,5 +183,6 @@ export default class Lab6App extends cs380.BaseApp {
 
     this.sphere.render(this.camera);
     this.bunny.render(this.camera);
+    this.plane.render(this.camera);
   }
 }
