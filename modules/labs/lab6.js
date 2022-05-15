@@ -99,10 +99,18 @@ export default class Lab6App extends cs380.BaseApp {
 
     // HTML interaction
     document.getElementById("settings").innerHTML = `  
+      <div>
       <label for="setting-ambient">Ambient Light</label>
       <input type="range" min=0 max=1 value=0.1 step=0.01 id="setting-ambient">
+      </div>
+      <div>
       <label for="setting-illuminance">Directional Light Illuminance</label>
       <input type="range" min=0 max=1 value=0.9 step=0.01 id="setting-illuminance">
+      </div>
+      <div>
+      <label for="light-angle">light smoothness</label>
+      <input type="range" min=0 max=1 value=0 step=0.01 id="light-angle">
+      </div>
       
       <ul>
         <li>
@@ -131,6 +139,10 @@ export default class Lab6App extends cs380.BaseApp {
     setInputBehavior("setting-illuminance", true, true, (val) => {
       val = Number(val);
       this.lights[1].illuminance = [val, val, val];
+    });
+    setInputBehavior("light-angle", true, true, (val) => {
+      val = Number(val);
+      this.lights[1].angleSmoothness = val;
     });
 
     // GL settings

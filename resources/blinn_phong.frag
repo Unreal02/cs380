@@ -74,8 +74,17 @@ void main() {
             vec3 pos = (W2C * vec4(lights[i].pos, 1.0)).xyz;
             vec3 L = normalize(pos - frag_pos.xyz);
             vec3 dir = normalize(vec3(W2C * vec4(lights[i].dir, 0.0)));
-            float cosin = dot(L, dir);
-            float coeff = cos(lights[i].angle) > cosin ? 0.0 : cosin;
+            float cosin = max(dot(L, dir), 0.0);
+            float angle = acos(cosin);
+            float coeff = 0.0;
+            if (angle > lights[i].angle + 0.5 * lights[i].angleSmoothness) coeff = 0.0; // outside
+            else if (angle > lights[i].angle - 0.5 * lights[i].angleSmoothness) {
+                // input : 0 ~ angleSmoothness
+                // output: 1 ~ 0
+                float interpolation = 1.0 - (angle - lights[i].angle + 0.5 * lights[i].angleSmoothness) / lights[i].angleSmoothness;
+                coeff = -cos(interpolation * 3.1415926) / 2.0 + 0.5;
+            } // transition
+            else coeff = 1.0; // inside
 
             // diffuse
             intensity += coeff * max(dot(N, L), 0.0) * lights[i].illuminance * mainColor;
