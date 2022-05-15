@@ -76,12 +76,11 @@ void main() {
             vec3 dir = normalize(vec3(W2C * vec4(lights[i].dir, 0.0)));
             float cosin = max(dot(L, dir), 0.0);
             float angle = acos(cosin);
+            float transitionAngle = lights[i].angle * lights[i].angleSmoothness;
             float coeff = 0.0;
-            if (angle > lights[i].angle + 0.5 * lights[i].angleSmoothness) coeff = 0.0; // outside
-            else if (angle > lights[i].angle - 0.5 * lights[i].angleSmoothness) {
-                // input : 0 ~ angleSmoothness
-                // output: 1 ~ 0
-                float interpolation = 1.0 - (angle - lights[i].angle + 0.5 * lights[i].angleSmoothness) / lights[i].angleSmoothness;
+            if (angle > lights[i].angle + transitionAngle) coeff = 0.0; // outside
+            else if (angle > lights[i].angle - transitionAngle) {
+                float interpolation = 1.0 - (angle - lights[i].angle + transitionAngle) / (2.0 * transitionAngle);
                 coeff = -cos(interpolation * 3.1415926) / 2.0 + 0.5;
             } // transition
             else coeff = 1.0; // inside
