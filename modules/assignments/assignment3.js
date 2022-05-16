@@ -81,7 +81,7 @@ export default class Assignment3 extends cs380.BaseApp {
     const bgPlane = cs380.Mesh.fromData(generatePlane(bgSize, bgSize));
     this.thingsToClear.push(bgMesh, bgPlane);
     this.bgList = [];
-    const bgMaterial = new Material();
+    const bgMaterial = new Material([1, 1, 1]);
     bgMaterial.shininess = 300;
 
     // add background component
@@ -90,7 +90,6 @@ export default class Assignment3 extends cs380.BaseApp {
       this[name].transform.setParent(this.background.transform);
       this[name].transform.localPosition = pos;
       this[name].transform.localScale = size;
-      this[name].uniforms.mainColor = [1, 1, 1];
       this[name].uniforms.material = bgMaterial;
       this.bgList.push(this[name]);
     };
@@ -106,22 +105,73 @@ export default class Assignment3 extends cs380.BaseApp {
     addBackgroundComponent("bgD", [1, 1, 1], [0, -bgSize / 2, 0]);
     quat.rotateX(this.bgD.transform.localRotation, quat.create(), Math.PI / 2);
 
+    // cube
+    const cubeMaterial = new Material([0, 0, 0]);
+    cubeMaterial.specularColor = [1, 1, 1];
+    this.cubeList = [];
+    const cubeMesh = cs380.Mesh.fromData(cs380.primitives.generateCube(3, 3, 3));
+    this.thingsToClear.push(cubeMesh);
+    this.cube = new cs380.PickableObject(cubeMesh, myShader, pickingShader, 100);
+    this.cube.transform.localPosition = [5, 0, 0];
+    this.cube.transform.localScale = [0.5, 0.5, 0.5];
+    this.cube.uniforms.material = cubeMaterial;
+    this.cube.uniforms.lights = this.lights;
+    this.cubeList.push(this.cube);
+
+    // cube tile
+    const tileMesh = cs380.Mesh.fromData(cs380.primitives.generateCube(0.9, 0.9, 0.9));
+    this.thingsToClear.push(tileMesh);
+    this.cubeTile = {
+      F: [],
+      B: [],
+      U: [],
+      D: [],
+      L: [],
+      R: [],
+    };
+    for (var face in this.cubeTile) {
+      for (var i = 0; i < 3; i++) {
+        this.cubeTile[face][i] = [];
+        for (var j = 0; j < 3; j++) {
+          this.cubeTile[face][i][j] = new cs380.PickableObject(
+            tileMesh,
+            myShader,
+            pickingShader,
+            face.charCodeAt(0)
+          );
+          this.cubeTile[face][i][j].transform.setParent(this.cube.transform);
+          this.cubeList.push(this.cubeTile[face][i][j]);
+          this.cubeTile[face][i][j].uniforms.lights = this.lights;
+        }
+      }
+    }
+    for (var i = 0; i < 3; i++) {
+      for (var j = 0; j < 3; j++) {
+        this.cubeTile.F[i][j].transform.localPosition = [i - 1, 1 - j, 1.1];
+        this.cubeTile.F[i][j].uniforms.mainColor = [0, 1, 0];
+        this.cubeTile.B[i][j].transform.localPosition = [1 - i, 1 - j, -1.1];
+        this.cubeTile.B[i][j].uniforms.mainColor = [0, 0, 1];
+        this.cubeTile.U[i][j].transform.localPosition = [j - 1, 1.1, i - 1];
+        this.cubeTile.U[i][j].uniforms.mainColor = [1, 1, 1];
+        this.cubeTile.D[i][j].transform.localPosition = [j - 1, -1.1, 1 - i];
+        this.cubeTile.D[i][j].uniforms.mainColor = [1, 1, 0];
+        this.cubeTile.L[i][j].transform.localPosition = [-1.1, 1 - i, j - 1];
+        this.cubeTile.L[i][j].uniforms.mainColor = [1, 0.5, 0];
+        this.cubeTile.R[i][j].transform.localPosition = [1.1, 1 - i, 1 - j];
+        this.cubeTile.R[i][j].uniforms.mainColor = [1, 0, 0];
+      }
+    }
+
     // Avatar (pickable)
     this.avatarList = [];
-    const materialSkin = new Material();
-    materialSkin.setColor([255, 227, 181].map((i) => i / 255));
+    const materialSkin = new Material([255, 227, 181].map((i) => i / 255));
     materialSkin.specularColor = [0, 0, 0];
-    const materialBlack = new Material();
-    materialBlack.setColor([0, 0, 0]);
+    const materialBlack = new Material([0, 0, 0]);
     materialBlack.specularColor = [0.3, 0.3, 0.3];
     materialBlack.shininess = 100;
-    const materialBlackMatte = new Material();
-    materialBlackMatte.setColor([0, 0, 0]);
-    const materialBlue = new Material();
-    materialBlue.setColor([0.25, 0.25, 1]);
+    const materialBlue = new Material([0.25, 0.25, 1]);
     materialBlue.specularColor = [0, 0, 0];
-    const materialGray = new Material();
-    materialGray.setColor([0.2, 0.2, 0.2]);
+    const materialGray = new Material([0.2, 0.2, 0.2]);
     materialGray.specularColor = [1, 1, 1];
     materialGray.shininess = 300;
 
@@ -415,6 +465,9 @@ export default class Assignment3 extends cs380.BaseApp {
         lerpFunc: this.poseLerpFunc,
       });
     }
+    if (key == "a") {
+      this.arcballEnabled = !this.arcballEnabled;
+    }
   }
 
   onKeyUp(key) {
@@ -443,6 +496,17 @@ export default class Assignment3 extends cs380.BaseApp {
     }
   }
 
+  xy2ArcballVec(x, y) {
+    var z = Math.sqrt(1 - x * x - y * y);
+    if (x * x + y * y >= 1) {
+      var magnitude = x * x + y * y;
+      x /= magnitude;
+      y /= magnitude;
+      z = -Math.sqrt(1 - x * x - y * y);
+    }
+    return vec3.normalize(vec3.create(), [x, y, z]);
+  }
+
   onMouseDown(e) {
     const { left, bottom } = gl.canvas.getBoundingClientRect();
     const x = e.clientX - left;
@@ -452,6 +516,12 @@ export default class Assignment3 extends cs380.BaseApp {
     const index = this.pickingBuffer.pick(x, y);
 
     console.log(`onMouseDown() got index ${index}`);
+
+    var x0 = (e.clientX - left - 400) / 300;
+    var y0 = (bottom - e.clientY - 400) / 300;
+    this.prevArcballVector = this.xy2ArcballVec(x0, y0);
+    this.mousePressed = true;
+    this.prevArcballQ = this.cube.transform.localRotation;
 
     // pose
     if (this.nextPoseList.length == 0) {
@@ -467,9 +537,30 @@ export default class Assignment3 extends cs380.BaseApp {
     }
   }
 
-  onMouseUp(e) {}
+  onMouseUp(e) {
+    this.mousePressed = false;
+  }
 
-  onMouseMove(e) {}
+  // update arcball
+  onMouseMove(e) {
+    if (!this.mousePressed || !this.arcballEnabled) return;
+
+    // x, y: value of -400 ~ 400
+    // my ball: radius of 300
+    const { left, bottom } = gl.canvas.getBoundingClientRect();
+
+    var x = (e.clientX - left - 400) / 300;
+    var y = (bottom - e.clientY - 400) / 300;
+    var v = this.xy2ArcballVec(x, y);
+    var v0 = this.prevArcballVector;
+
+    var n = vec3.normalize(vec3.create(), vec3.cross(vec3.create(), v0, v));
+    var angle = vec3.angle(v0, v);
+
+    var q = quat.setAxisAngle(quat.create(), n, angle);
+    var q0 = this.prevArcballQ;
+    this.cube.transform.localRotation = quat.mul(quat.create(), q, q0);
+  }
 
   finalize() {
     // Finalize WebGL objects (mesh, shader, texture, ...)
@@ -480,7 +571,7 @@ export default class Assignment3 extends cs380.BaseApp {
 
   update(elapsed, dt) {
     // Updates before rendering here
-    this.simpleOrbitControl.update(dt);
+    if (!this.arcballEnabled) this.simpleOrbitControl.update(dt);
 
     // change pose
     if (this.nextPoseList.length > 0) {
@@ -521,6 +612,7 @@ export default class Assignment3 extends cs380.BaseApp {
 
     // renderPicking() here
     this.avatarList.forEach((i) => i.renderPicking(this.camera));
+    this.cubeList.forEach((i) => i.renderPicking(this.camera));
 
     // Render real scene
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -533,6 +625,7 @@ export default class Assignment3 extends cs380.BaseApp {
     // render() here
     this.bgList.forEach((i) => i.render(this.camera));
     this.avatarList.forEach((i) => i.render(this.camera));
+    this.cubeList.forEach((i) => i.render(this.camera));
   }
 
   setBodyPivot() {
@@ -586,4 +679,6 @@ export default class Assignment3 extends cs380.BaseApp {
   currPose;
   nextPoseList = [];
   changePoseTime = 0;
+  mousePressed = false;
+  arcballEnabled = false;
 }

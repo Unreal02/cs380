@@ -6,17 +6,11 @@ import * as cs380 from "./cs380/cs380.js";
 import { LightType, Light } from "./blinn_phong.js";
 
 export class Material {
-  constructor() {
-    this.ambientColor = [1, 1, 1];
-    this.diffuseColor = [1, 1, 1];
-    this.specularColor = [1, 1, 1];
-    this.shininess = 100;
-  }
-
-  setColor(color) {
+  constructor(color = [1, 1, 1]) {
     this.ambientColor = color;
     this.diffuseColor = color;
     this.specularColor = color;
+    this.shininess = 100;
   }
 }
 
