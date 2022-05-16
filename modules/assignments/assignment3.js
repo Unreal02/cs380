@@ -114,17 +114,16 @@ export default class Assignment3 extends cs380.BaseApp {
     const cubeMaterial = new Material([0, 0, 0]);
     cubeMaterial.specularColor = [1, 1, 1];
     this.cubeList = [];
-    const cubeMesh = cs380.Mesh.fromData(cs380.primitives.generateCube(3, 3, 3));
+    const cubeMesh = cs380.Mesh.fromData(cs380.primitives.generateCube(1.5, 1.5, 1.5));
     this.thingsToClear.push(cubeMesh);
     this.cube = new cs380.PickableObject(cubeMesh, myShader, pickingShader, 100);
     this.cube.transform.localPosition = [5, 0, 0];
-    this.cube.transform.localScale = [0.5, 0.5, 0.5];
     this.cube.uniforms.material = cubeMaterial;
     this.cube.uniforms.lights = this.lights;
     this.cubeList.push(this.cube);
 
     // cube tile
-    const tileMesh = cs380.Mesh.fromData(cs380.primitives.generateCube(0.9, 0.9, 0.9));
+    const tileMesh = cs380.Mesh.fromData(cs380.primitives.generateCube(0.45, 0.45, 0.45));
     this.thingsToClear.push(tileMesh);
     this.cubeTile = {
       F: [],
@@ -151,17 +150,17 @@ export default class Assignment3 extends cs380.BaseApp {
     }
     for (var i = 0; i < 3; i++) {
       for (var j = 0; j < 3; j++) {
-        this.cubeTile.F[i][j].transform.localPosition = [i - 1, 1 - j, 1.1];
+        this.cubeTile.F[i][j].transform.localPosition = [i - 1, 1 - j, 1.1].map((a) => a / 2);
         this.cubeTile.F[i][j].uniforms.mainColor = [0, 1, 0];
-        this.cubeTile.B[i][j].transform.localPosition = [1 - i, 1 - j, -1.1];
+        this.cubeTile.B[i][j].transform.localPosition = [1 - i, 1 - j, -1.1].map((a) => a / 2);
         this.cubeTile.B[i][j].uniforms.mainColor = [0, 0, 1];
-        this.cubeTile.U[i][j].transform.localPosition = [j - 1, 1.1, i - 1];
+        this.cubeTile.U[i][j].transform.localPosition = [j - 1, 1.1, i - 1].map((a) => a / 2);
         this.cubeTile.U[i][j].uniforms.mainColor = [1, 1, 1];
-        this.cubeTile.D[i][j].transform.localPosition = [j - 1, -1.1, 1 - i];
+        this.cubeTile.D[i][j].transform.localPosition = [j - 1, -1.1, 1 - i].map((a) => a / 2);
         this.cubeTile.D[i][j].uniforms.mainColor = [1, 1, 0];
-        this.cubeTile.L[i][j].transform.localPosition = [-1.1, 1 - i, j - 1];
+        this.cubeTile.L[i][j].transform.localPosition = [-1.1, 1 - i, j - 1].map((a) => a / 2);
         this.cubeTile.L[i][j].uniforms.mainColor = [1, 0.5, 0];
-        this.cubeTile.R[i][j].transform.localPosition = [1.1, 1 - i, 1 - j];
+        this.cubeTile.R[i][j].transform.localPosition = [1.1, 1 - i, 1 - j].map((a) => a / 2);
         this.cubeTile.R[i][j].uniforms.mainColor = [1, 0, 0];
       }
     }
@@ -243,13 +242,13 @@ export default class Assignment3 extends cs380.BaseApp {
     addAvatarComponentInner("head00", "head0", head0Mesh, [0, 0, 0], 2);
     addAvatarComponentInner("hair0", "head0", hairMesh, [0, 0, 0], 2, materialBlack);
     addAvatarComponentInner("hair1", "head0", hairMesh, [0, 0, 0], 2, materialBlack);
-    addAvatarComponentInner("eye0", "head0", eyeMesh, [-0.2, 0, 0.43], 2, materialBlack);
-    addAvatarComponentInner("eye1", "head0", eyeMesh, [0.2, 0, 0.43], 2, materialBlack);
-    this.head0.transform.localScale = [0.8, 1, 0.8];
+    addAvatarComponentInner("eye0", "head0", eyeMesh, [-0.18, 0, 0.38], 2, materialBlack);
+    addAvatarComponentInner("eye1", "head0", eyeMesh, [0.18, 0, 0.38], 2, materialBlack);
+    this.head00.transform.localScale = [0.9, 1, 0.9];
     this.hair0.transform.localRotation = quat.fromEuler(quat.create(), -45, 45, 0);
     this.hair1.transform.localRotation = quat.fromEuler(quat.create(), -45, -45, 0);
-    this.eye0.transform.localRotation = quat.fromEuler(quat.create(), 0, 180, 0);
-    this.eye1.transform.localRotation = quat.fromEuler(quat.create(), 0, 180, 0);
+    this.eye0.transform.localRotation = quat.fromEuler(quat.create(), 0, -10, 0);
+    this.eye1.transform.localRotation = quat.fromEuler(quat.create(), 0, 10, 0);
 
     // leg and arm mesh
     const legMesh = cs380.Mesh.fromData(generateCapsule(0.25, 2));
