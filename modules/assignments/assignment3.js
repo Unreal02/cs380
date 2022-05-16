@@ -71,7 +71,12 @@ export default class Assignment3 extends cs380.BaseApp {
     light4.type = LightType.POINT;
     light4.transform.localPosition = [2, 4, 2];
 
-    this.lights = [light0, light1, light2, light3, light4];
+    const light5 = new Light();
+    light5.illuminance = [1, 1, 1];
+    light5.type = LightType.DIRECTIONAL;
+    light5.transform.lookAt([-1, -1, -1]);
+
+    this.lights = [light0, light1, light2, light3, light4, light5];
 
     // background (not pickable)
     const bgSize = 30;
@@ -141,7 +146,6 @@ export default class Assignment3 extends cs380.BaseApp {
           );
           this.cubeTile[face][i][j].transform.setParent(this.cube.transform);
           this.cubeList.push(this.cubeTile[face][i][j]);
-          this.cubeTile[face][i][j].uniforms.lights = this.lights;
         }
       }
     }
@@ -356,6 +360,7 @@ export default class Assignment3 extends cs380.BaseApp {
 
     // apply lights
     this.bgList.forEach((i) => (i.uniforms.lights = this.lights));
+    this.cubeList.forEach((i) => (i.uniforms.lights = this.lights));
     this.avatarList.forEach((i) => (i.uniforms.lights = this.lights));
 
     // pose
@@ -395,7 +400,7 @@ export default class Assignment3 extends cs380.BaseApp {
 
     document.getElementById("settings").innerHTML = `
       <div>
-      <input type="range" min=0 max=1 value=0 step=0.01 id="light0-illuminance">
+      <input type="range" min=0 max=1 value=0.1 step=0.01 id="light0-illuminance">
       <label for="light0-illuminance">Ambient Light</label>
       </div>
       <div>
@@ -414,6 +419,18 @@ export default class Assignment3 extends cs380.BaseApp {
       <input type="range" min=0 max=10 value=10 step=0.1 id="light4-illuminance">
       <label for="light4-illuminance">Point Light</label>
       </div>
+      <div>
+      <input type="range" min=0 max=1 value=1 step=0.01 id="light5-illuminance">
+      <label for="light5-illuminance">Directional Light</label>
+      </div>
+      <div>
+      <label for="toon">Toon shading</label>
+      <input type="checkbox" id="toon">
+      </div>
+      <div>
+      <label for="arcball">Rotate Cube</label>
+      <input type="checkbox" id="arcball">
+      </div>
     `;
     cs380.utils.setInputBehavior("light0-illuminance", (val) => {
       light0.illuminance = [val, val, val];
@@ -429,6 +446,13 @@ export default class Assignment3 extends cs380.BaseApp {
     });
     cs380.utils.setInputBehavior("light4-illuminance", (val) => {
       light4.illuminance = [val, val, val];
+    });
+    cs380.utils.setInputBehavior("light5-illuminance", (val) => {
+      light5.illuminance = [val, val, val];
+    });
+    cs380.utils.setCheckboxBehavior("arcball", (val) => (this.arcballEnabled = val));
+    cs380.utils.setCheckboxBehavior("toon", (val) => {
+      this.avatarList.forEach((i) => (i.uniforms.material.toon = val));
     });
 
     // GL settings
@@ -464,9 +488,6 @@ export default class Assignment3 extends cs380.BaseApp {
         interval: 0.5,
         lerpFunc: this.poseLerpFunc,
       });
-    }
-    if (key == "a") {
-      this.arcballEnabled = !this.arcballEnabled;
     }
   }
 

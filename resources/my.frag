@@ -30,6 +30,7 @@ struct Material {
     vec3 diffuseColor;
     vec3 specularColor;
     float shininess;
+    bool toon;
 };
 
 uniform int numLights;
@@ -39,6 +40,22 @@ uniform Material material;
 float random(vec3 seed) {
     seed = seed + vec3(123.456, 789.123, 456.789);
     return fract(sin(dot(seed, vec3(12.9898, 78.233, 45.5432))) * 43758.5453);
+}
+
+float toonDiffuse(float v) {
+    if (material.toon) {
+        if (v > 0.3) return 1.0;
+        else return 0.0;
+    }
+    else return v;
+}
+
+float toonSpecular(float v) {
+    if (material.toon) {
+        if (v > 0.01) return 0.4;
+        else return 0.0;
+    }
+    else return v;
 }
 
 void main() {
@@ -55,13 +72,13 @@ void main() {
 
             // diffuse
             vec3 L = -normalize(vec3(W2C * vec4(lights[i].dir, 0.0)));
-            intensity += max(dot(N, L), 0.0) * lights[i].illuminance * material.diffuseColor;
+            intensity += toonDiffuse(max(dot(N, L), 0.0)) * lights[i].illuminance * material.diffuseColor;
 
             // specular
             vec3 V = normalize(vec4(0, 0, 0, 1) * W2C - frag_pos).xyz;
             vec3 H = normalize(L + V);
             float psi = dot(N, H);
-            intensity += max(pow(max(psi, 0.0), 300.0), 0.0) * lights[i].illuminance * material.specularColor;
+            intensity += toonSpecular(max(pow(max(psi, 0.0), material.shininess), 0.0)) * lights[i].illuminance * material.specularColor;
         }
         else if (lights[i].type == POINT) {
             vec3 pos = (W2C * vec4(lights[i].pos, 1.0)).xyz;
@@ -70,13 +87,13 @@ void main() {
 
             // diffuse
             vec3 L = normalize(pos - frag_pos.xyz);
-            intensity += coeff * max(dot(N, L), 0.0) * lights[i].illuminance * material.diffuseColor;
+            intensity += toonDiffuse(coeff * max(dot(N, L), 0.0)) * lights[i].illuminance * material.diffuseColor;
 
             // specular
             vec3 V = normalize(vec4(0, 0, 0, 1) * W2C - frag_pos).xyz;
             vec3 H = normalize(L + V);
             float psi = dot(N, H);
-            intensity += coeff * max(pow(max(psi, 0.0), 300.0), 0.0) * lights[i].illuminance * material.specularColor;
+            intensity += toonSpecular(coeff * max(pow(max(psi, 0.0), material.shininess), 0.0)) * lights[i].illuminance * material.specularColor;
         }
         else if (lights[i].type == SPOTLIGHT) {
             vec3 pos = (W2C * vec4(lights[i].pos, 1.0)).xyz;
@@ -94,18 +111,27 @@ void main() {
             else coeff = 1.0; // inside
 
             // diffuse
-            intensity += coeff * max(dot(N, L), 0.0) * lights[i].illuminance * material.diffuseColor;
+            intensity += toonDiffuse(coeff * max(dot(N, L), 0.0)) * lights[i].illuminance * material.diffuseColor;
 
             // specular
             vec3 V = normalize(vec4(0, 0, 0, 1) * W2C - frag_pos).xyz;
             vec3 H = normalize(L + V);
             float psi = dot(N, H);
-            intensity += coeff * max(pow(max(psi, 0.0), material.shininess), 0.0) * lights[i].illuminance * material.specularColor;
+            intensity += toonSpecular(coeff * max(pow(max(psi, 0.0), material.shininess), 0.0)) * lights[i].illuminance * material.specularColor;
         }
         else if (lights[i].type == AMBIENT) {
             // TODO: implement ambient reflection
             intensity += lights[i].illuminance * material.ambientColor;
         }
+    }
+
+    // outline
+    if (material.toon) {
+        vec3 V = normalize(vec4(0, 0, 0, 1) * W2C - frag_pos).xyz;
+        float outline = 1.0 - pow(abs(dot(N, V)), 2.0);
+        outline = pow(outline, 5.0);
+        outline = 1.0 - clamp(outline * 3.0, 0.0, 1.0);
+        intensity *= outline;
     }
     
     output_color = vec4(intensity, 1.0);

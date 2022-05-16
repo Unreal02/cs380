@@ -11,6 +11,7 @@ export class Material {
     this.diffuseColor = color;
     this.specularColor = color;
     this.shininess = 100;
+    this.toon = false;
   }
 }
 
@@ -83,8 +84,15 @@ export class MyShader extends cs380.BaseShader {
       material.ambientColor = kv["mainColor"];
       material.diffuseColor = kv["mainColor"];
       material.specularColor = kv["mainColor"];
+      material.toon = false;
     }
-    const materialProperties = ["ambientColor", "diffuseColor", "specularColor", "shininess"];
+    const materialProperties = [
+      "ambientColor",
+      "diffuseColor",
+      "specularColor",
+      "shininess",
+      "toon",
+    ];
     const location = materialProperties.reduce((obj, x) => {
       obj[x] = gl.getUniformLocation(this.program, `material.${x}`);
       return obj;
@@ -93,5 +101,6 @@ export class MyShader extends cs380.BaseShader {
     gl.uniform3f(location.diffuseColor, ...material.diffuseColor);
     gl.uniform3f(location.specularColor, ...material.specularColor);
     gl.uniform1f(location.shininess, material.shininess);
+    gl.uniform1i(location.toon, material.toon ? 1 : 0);
   }
 }
