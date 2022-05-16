@@ -216,3 +216,33 @@ export const jump = {
     footR: [45, 0, 0],
   },
 };
+
+export const cheese = {
+  camera: idle.camera,
+  position: idle.position,
+  rotation: {
+    ...idle.rotation,
+    body: [0, 0, -15],
+    legRU: [0, 0, -15],
+    armLD: [0, 0, 60],
+    armRU: [0, 0, -90],
+    armRD: [0, -180, -120],
+    handL: [0, 180, 0],
+    handR: [0, 0, 0],
+    fingerR10: [90, 0, 90],
+    fingerR11: [90, 0, 0],
+    fingerR20: [0, 0, 30],
+    fingerR21: [0, 0, 0],
+    fingerR22: [0, 0, 0],
+    fingerR30: [0, 0, 0],
+    fingerR31: [0, 0, 0],
+    fingerR32: [0, 0, 0],
+    fingerR40: [90, 0, 0],
+    fingerR41: [90, 0, 0],
+    fingerR42: [90, 0, 0],
+    fingerR50: [90, 0, 0],
+    fingerR51: [90, 0, 0],
+    fingerR52: [90, 0, 0],
+    footR: [45, 0, 0],
+  },
+};

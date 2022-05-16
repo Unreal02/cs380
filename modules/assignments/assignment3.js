@@ -44,36 +44,40 @@ export default class Assignment3 extends cs380.BaseApp {
     this.thingsToClear.push(myShader, pickingShader, this.pickingBuffer);
 
     // initialize light sources
-    this.lights = [];
-
     const light0 = new Light();
     light0.illuminance = [0.1, 0.1, 0.1];
     light0.type = LightType.AMBIENT;
-    this.lights.push(light0);
 
     const light1 = new Light();
-    light1.illuminance = [1, 1, 1];
-    light1.transform.localRotation = quat.fromEuler(quat.create(), 90, 0, 0);
+    light1.illuminance = [1, 0, 0];
     light1.type = LightType.SPOTLIGHT;
     light1.transform.localPosition = [0, 10, 0];
-    light1.angle = Math.PI / 12;
-    this.lights.push(light1);
+    light1.transform.localRotation = quat.fromEuler(quat.create(), 90, 0, 0);
 
     const light2 = new Light();
-    light2.illuminance = [1, 1, 1];
-    light2.type = LightType.POINT;
-    this.lights.push(light2);
+    light2.illuminance = [0, 1, 0];
+    light2.type = LightType.SPOTLIGHT;
+    light2.transform.localPosition = [-5, 10, 0];
+    light2.transform.lookAt([-4, 10, 0]);
 
     const light3 = new Light();
-    light3.illuminance = [1, 1, 1];
-    light3.type = LightType.POINT;
-    this.lights.push(light3);
+    light3.illuminance = [0, 0, 1];
+    light3.type = LightType.SPOTLIGHT;
+    light3.transform.localPosition = [5, 10, 0];
+    light3.transform.lookAt([4, 10, 0]);
+
+    const light4 = new Light();
+    light4.illuminance = [10, 10, 10];
+    light4.type = LightType.POINT;
+    light4.transform.localPosition = [2, 4, 2];
+
+    this.lights = [light0, light1, light2, light3, light4];
 
     // background (not pickable)
-    const bgSize = 24;
+    const bgSize = 30;
     const bgMesh = new cs380.Mesh();
     this.background = new cs380.RenderObject(bgMesh, myShader);
-    this.background.transform.localPosition = [0, 7.7, 0];
+    this.background.transform.localPosition = [0, 10.7, 0];
     const bgPlane = cs380.Mesh.fromData(generatePlane(bgSize, bgSize));
     this.thingsToClear.push(bgMesh, bgPlane);
     this.bgList = [];
@@ -92,6 +96,7 @@ export default class Assignment3 extends cs380.BaseApp {
     };
 
     // background
+    addBackgroundComponent("bgF", [1, 1, 1], [0, 0, bgSize / 2]);
     addBackgroundComponent("bgB", [1, 1, 1], [0, 0, -bgSize / 2]);
     quat.rotateX(this.bgB.transform.localRotation, quat.create(), Math.PI);
     addBackgroundComponent("bgL", [1, 1, 1], [-bgSize / 2, 0, 0]);
@@ -184,8 +189,8 @@ export default class Assignment3 extends cs380.BaseApp {
     addAvatarComponentInner("head00", "head0", head0Mesh, [0, 0, 0], 2);
     addAvatarComponentInner("hair0", "head0", hairMesh, [0, 0, 0], 2, materialBlack);
     addAvatarComponentInner("hair1", "head0", hairMesh, [0, 0, 0], 2, materialBlack);
-    addAvatarComponentInner("eye0", "head0", eyeMesh, [-0.2, 0, 0.43], 2, materialBlackMatte);
-    addAvatarComponentInner("eye1", "head0", eyeMesh, [0.2, 0, 0.43], 2, materialBlackMatte);
+    addAvatarComponentInner("eye0", "head0", eyeMesh, [-0.2, 0, 0.43], 2, materialBlack);
+    addAvatarComponentInner("eye1", "head0", eyeMesh, [0.2, 0, 0.43], 2, materialBlack);
     this.head0.transform.localScale = [0.8, 1, 0.8];
     this.hair0.transform.localRotation = quat.fromEuler(quat.create(), -45, 45, 0);
     this.hair1.transform.localRotation = quat.fromEuler(quat.create(), -45, -45, 0);
@@ -304,7 +309,9 @@ export default class Assignment3 extends cs380.BaseApp {
     this.avatarList.forEach((i) => (i.uniforms.lights = this.lights));
 
     // pose
-    this.setPose(pose.idle);
+    this.currPose = pose.idle;
+    this.setLegLDPivot();
+    this.setPose(this.currPose);
 
     // Event listener for interactions
     this.handleKeyDown = (e) => {
@@ -312,27 +319,67 @@ export default class Assignment3 extends cs380.BaseApp {
       if (e.repeat) return;
       this.onKeyDown(e.key);
     };
+    this.handleKeyUp = (e) => {
+      this.onKeyUp(e.key);
+    };
     this.handleMouseDown = (e) => {
       // e.button = 0 if it is left mouse button
       if (e.button !== 0) return;
       this.onMouseDown(e);
     };
+    this.handleMouseUp = (e) => {
+      if (e.button !== 0) return;
+      this.onMouseUp(e);
+    };
+    this.handleMouseMove = (e) => {
+      if (e.button !== 0) return;
+      this.onMouseMove(e);
+    };
+    this.mousePressed = false;
 
     document.addEventListener("keydown", this.handleKeyDown);
+    document.addEventListener("keyup", this.handleKeyUp);
     gl.canvas.addEventListener("mousedown", this.handleMouseDown);
+    document.addEventListener("mouseup", this.handleMouseUp);
+    gl.canvas.addEventListener("mousemove", this.handleMouseMove);
 
     document.getElementById("settings").innerHTML = `
-      <h3>Basic requirements</h3>
-      <ul>
-        <li>Implement point light, and spotlight [2 pts]</li>
-        <li>Update the implementation to support colored (RGB) light [1 pts]</li>
-        <li>Update the implementation to support materials (reflection coefficients, shineness) [2 pts] </li>
-        <li>Show some creativity in your scene [1 pts]</li>
-      </ul>
-      Import at least two models to show material differnece <br/>
-      Use your creativity (animation, interaction, etc.) to make each light source is recognized respectively. <br/>
-      <strong>Start early!</strong>
+      <div>
+      <input type="range" min=0 max=1 value=0 step=0.01 id="light0-illuminance">
+      <label for="light0-illuminance">Ambient Light</label>
+      </div>
+      <div>
+      <input type="range" min=0 max=1 value=1 step=0.01 id="light1-illuminance">
+      <label for="light1-illuminance">Red Light</label>
+      </div>
+      <div>
+      <input type="range" min=0 max=1 value=1 step=0.01 id="light2-illuminance">
+      <label for="light2-illuminance">Green Light</label>
+      </div>
+      <div>
+      <input type="range" min=0 max=1 value=1 step=0.01 id="light3-illuminance">
+      <label for="light3-illuminance">Blue Light</label>
+      </div>
+      <div>
+      <input type="range" min=0 max=10 value=10 step=0.1 id="light4-illuminance">
+      <label for="light4-illuminance">Point Light</label>
+      </div>
     `;
+    cs380.utils.setInputBehavior("light0-illuminance", (val) => {
+      light0.illuminance = [val, val, val];
+    });
+    cs380.utils.setInputBehavior("light1-illuminance", (val) => {
+      light1.illuminance = [val, 0, 0];
+    });
+    cs380.utils.setInputBehavior("light2-illuminance", (val) => {
+      light2.illuminance = [0, val, 0];
+    });
+    cs380.utils.setInputBehavior("light3-illuminance", (val) => {
+      light3.illuminance = [0, 0, val];
+    });
+    cs380.utils.setInputBehavior("light4-illuminance", (val) => {
+      light4.illuminance = [val, val, val];
+    });
 
     // GL settings
     gl.enable(gl.CULL_FACE);
@@ -342,6 +389,58 @@ export default class Assignment3 extends cs380.BaseApp {
 
   onKeyDown(key) {
     console.log(`key down: ${key}`);
+
+    if (this.nextPoseList.length > 0) return;
+    if (key == "1") {
+      this.setBodyPivot();
+      this.nextPoseList.push({
+        pose: pose.pose1,
+        interval: 0.5,
+        lerpFunc: this.poseLerpFunc,
+      });
+    }
+    if (key == "2") {
+      this.setLegLDPivot();
+      this.nextPoseList.push({
+        pose: pose.pose2,
+        interval: 0.5,
+        lerpFunc: this.poseLerpFunc,
+      });
+    }
+    if (key == "3") {
+      this.setLegLDPivot();
+      this.nextPoseList.push({
+        pose: pose.cheese,
+        interval: 0.5,
+        lerpFunc: this.poseLerpFunc,
+      });
+    }
+  }
+
+  onKeyUp(key) {
+    console.log(`key up: ${key}`);
+    if (this.nextPoseList.length > 1) return;
+    if (key == "1") {
+      this.nextPoseList.push({
+        pose: pose.idle,
+        interval: 0.5,
+        lerpFunc: this.poseLerpFunc,
+      });
+    }
+    if (key == "2") {
+      this.nextPoseList.push({
+        pose: pose.idle,
+        interval: 0.5,
+        lerpFunc: this.poseLerpFunc,
+      });
+    }
+    if (key == "3") {
+      this.nextPoseList.push({
+        pose: pose.idle,
+        interval: 0.5,
+        lerpFunc: this.poseLerpFunc,
+      });
+    }
   }
 
   onMouseDown(e) {
@@ -353,7 +452,24 @@ export default class Assignment3 extends cs380.BaseApp {
     const index = this.pickingBuffer.pick(x, y);
 
     console.log(`onMouseDown() got index ${index}`);
+
+    // pose
+    if (this.nextPoseList.length == 0) {
+      if (index == 1) {
+        this.setLegLDPivot();
+        this.nextPoseList.push(
+          { pose: pose.jumpReady, interval: 0.5, lerpFunc: this.poseLerpFunc },
+          { pose: pose.jump, interval: 0.5, lerpFunc: this.lerpQuadratic2 },
+          { pose: pose.jumpReady, interval: 0.5, lerpFunc: this.lerpQuadratic1 },
+          { pose: pose.idle, interval: 0.5, lerpFunc: this.poseLerpFunc }
+        );
+      }
+    }
   }
+
+  onMouseUp(e) {}
+
+  onMouseMove(e) {}
 
   finalize() {
     // Finalize WebGL objects (mesh, shader, texture, ...)
@@ -365,6 +481,35 @@ export default class Assignment3 extends cs380.BaseApp {
   update(elapsed, dt) {
     // Updates before rendering here
     this.simpleOrbitControl.update(dt);
+
+    // change pose
+    if (this.nextPoseList.length > 0) {
+      const nextPose = this.nextPoseList[0].pose;
+      const interval = this.nextPoseList[0].interval;
+      const lerpFunc = this.nextPoseList[0].lerpFunc;
+      if (this.changePoseTime >= interval) {
+        this.setPose(nextPose);
+        this.currPose = nextPose;
+        this.nextPoseList.shift();
+        this.changePoseTime = 0;
+      } else {
+        this.changePoseTime += dt;
+        this[this.currPivot].transform.localPosition = vec3.lerp(
+          vec3.create(),
+          this.currPose.position[this.currPivot],
+          nextPose.position[this.currPivot],
+          lerpFunc(this.changePoseTime / interval)
+        );
+        for (const part in this.currPose.rotation) {
+          this[part].transform.localRotation = quat.slerp(
+            quat.create(),
+            quat.fromEuler(quat.create(), ...this.currPose.rotation[part]),
+            quat.fromEuler(quat.create(), ...nextPose.rotation[part]),
+            lerpFunc(this.changePoseTime / interval)
+          );
+        }
+      }
+    }
 
     // Render picking information first
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.pickingBuffer.fbo);
@@ -390,18 +535,55 @@ export default class Assignment3 extends cs380.BaseApp {
     this.avatarList.forEach((i) => i.render(this.camera));
   }
 
+  setBodyPivot() {
+    this.currPivot = "body";
+    this.body.transform.setParent(this.avatar.transform);
+    this.body.transform.localPosition = [0, 0, 0];
+    this.body0.transform.localPosition = [0, 0, 0];
+    this.legLU.transform.setParent(this.body.transform);
+    this.legLU.transform.localPosition = [0.3, 0, 0];
+    this.legLU0.transform.localPosition = [0, -1, 0];
+    this.footL.transform.localPosition = [0, -2, 0];
+    this.legLD.transform.setParent(this.legLU.transform);
+    this.legLD.transform.localPosition = [0, -2, 0];
+    this.legLD0.transform.localPosition = [0, -1, 0];
+  }
+
+  setLegLDPivot() {
+    this.currPivot = "legLD";
+    this.legLD.transform.setParent(this.avatar.transform);
+    this.legLD.transform.localPosition = [0.3, -4, 0];
+    this.legLD0.transform.localPosition = [0, 1, 0];
+    this.footL.transform.localPosition = [0, 0, 0];
+    this.legLU.transform.setParent(this.legLD.transform);
+    this.legLU.transform.localPosition = [0, 2, 0];
+    this.legLU0.transform.localPosition = [0, 1, 0];
+    this.body.transform.setParent(this.legLU.transform);
+    this.body.transform.localPosition = [-0.3, 2, 0];
+    this.body0.transform.localPosition = [0, 0, 0];
+  }
+
   setPose(poseData) {
-    this.body.transform.localPosition = poseData.position.body;
+    this[this.currPivot].transform.localPosition = poseData.position[this.currPivot];
     for (const part in poseData.rotation) {
       this[part].transform.localRotation = quat.fromEuler(
         quat.create(),
         ...poseData.rotation[part]
       );
     }
-    this.camera.transform.localPosition = poseData.camera.position;
-    this.camera.transform.localRotation = quat.fromEuler(
-      quat.create(),
-      ...poseData.camera.rotation
-    );
   }
+
+  poseLerpFunc(x) {
+    return x;
+  }
+  lerpQuadratic1(x) {
+    return x * x;
+  }
+  lerpQuadratic2(x) {
+    return -x * x + 2 * x;
+  }
+  currPivot;
+  currPose;
+  nextPoseList = [];
+  changePoseTime = 0;
 }
