@@ -9,6 +9,7 @@ uniform mat4 cameraTransform;
 uniform mat4 modelTransform;
 
 void main() {
-  //TODO: implement uv and gl_Position
-
+    // TODO: implement uv and gl_Position
+    uv = (projectionMatrix * transpose(inverse(cameraTransform)) * modelTransform * vec4(in_pos, 1)).xyz;
+    gl_Position = projectionMatrix * modelTransform * vec4(in_pos, 1);
 }
