@@ -9,7 +9,7 @@ import Lab5App from "./modules/labs/lab5.js";
 import Lab6App from "./modules/labs/lab6.js";
 import Lab7App from "./modules/labs/lab7.js";
 import Lab8App from "./modules/labs/lab8.js";
-
+import Lab9App from "./modules/labs/lab9.js";
 
 import Assignment1 from "./modules/assignments/assignment1.js";
 import Assignment2 from "./modules/assignments/assignment2.js";
@@ -62,6 +62,10 @@ const apps = {
     app: Lab8App,
     title: "Lab 8",
   },
+  lab9: {
+    app: Lab9App,
+    title: "Lab 9",
+  },
   assignment1: {
     app: Assignment1,
     title: "Assignment 1",
@@ -81,7 +85,7 @@ const apps = {
 };
 
 // Key of the very first app once you access localhost:8000
-const defaultApp = "lab8";
+const defaultApp = "lab9";
 
 function main() {
   const canvas = document.querySelector("#glcanvas");
