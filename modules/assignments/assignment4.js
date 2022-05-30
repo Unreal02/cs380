@@ -30,17 +30,7 @@ class Framebuffer {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texImage2D(
-      gl.TEXTURE_2D,
-      0,
-      gl.RGB,
-      width,
-      height,
-      0,
-      gl.RGB,
-      gl.UNSIGNED_BYTE,
-      null
-    );
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, width, height, 0, gl.RGB, gl.UNSIGNED_BYTE, null);
 
     gl.framebufferTexture2D(
       gl.FRAMEBUFFER,
@@ -52,19 +42,9 @@ class Framebuffer {
 
     this.dbo = gl.createRenderbuffer();
     gl.bindRenderbuffer(gl.RENDERBUFFER, this.dbo);
-    gl.renderbufferStorage(
-      gl.RENDERBUFFER,
-      gl.DEPTH_COMPONENT16,
-      width,
-      height
-    );
+    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, width, height);
 
-    gl.framebufferRenderbuffer(
-      gl.FRAMEBUFFER,
-      gl.DEPTH_ATTACHMENT,
-      gl.RENDERBUFFER,
-      this.dbo
-    );
+    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, this.dbo);
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.bindRenderbuffer(gl.RENDERBUFFER, null);
@@ -82,17 +62,17 @@ class PhotoFilm {
     this.framebuffer = new Framebuffer();
     this.framebuffer.initialize(width, height);
 
-    const planeMeshData = cs380.primitives.generatePlane(1,1);
+    const planeMeshData = cs380.primitives.generatePlane(1, 1);
     const planeMesh = cs380.Mesh.fromData(planeMeshData);
     const shader = await cs380.buildShader(UnlitTextureShader);
-    
+
     this.transform = new cs380.Transform();
     quat.rotateY(this.transform.localRotation, quat.create(), Math.PI);
 
     this.background = new cs380.RenderObject(planeMesh, shader);
     this.background.uniforms.useScreenSpace = true;
     this.background.uniforms.useColor = true;
-    this.background.uniforms.solidColor = vec3.fromValues(1,1,1);
+    this.background.uniforms.solidColor = vec3.fromValues(1, 1, 1);
     vec3.set(this.background.transform.localScale, 1.2, 1.4, 1);
     this.background.transform.setParent(this.transform);
 
@@ -107,7 +87,7 @@ class PhotoFilm {
 
     this.handleMouseDown = (e) => {
       if (this.printFinished) this.hide();
-    }
+    };
     document.addEventListener("mousedown", this.handleMouseDown);
   }
 
@@ -156,13 +136,7 @@ export default class Assignment4 extends cs380.BaseApp {
     this.camera = new cs380.Camera();
     vec3.set(this.camera.transform.localPosition, 0, 2, 9);
     this.camera.transform.lookAt(vec3.fromValues(0, -1, -9));
-    mat4.perspective(
-      this.camera.projectionMatrix,
-      (45 * Math.PI) / 180,
-      aspectRatio,
-      0.01,
-      1000
-    );
+    mat4.perspective(this.camera.projectionMatrix, (45 * Math.PI) / 180, aspectRatio, 0.01, 1000);
 
     this.width = width;
     this.height = height;
@@ -170,13 +144,11 @@ export default class Assignment4 extends cs380.BaseApp {
     // Rest of initialization below
     this.thingsToClear = [];
 
-    this.photo = new PhotoFilm()
+    this.photo = new PhotoFilm();
     await this.photo.initialize(width, height);
     this.thingsToClear.push(this.photo);
 
     // TODO: initialize your object + scene here
-    
-
 
     // Setup GUIs
     // TODO: add camera effects of your own
@@ -211,16 +183,18 @@ export default class Assignment4 extends cs380.BaseApp {
       <strong>Have fun!</strong>
     `;
 
-    const shutterAudio = document.getElementById('shutter-sfx');
-    document.getElementById('shutter').onclick = () => {
+    const shutterAudio = document.getElementById("shutter-sfx");
+    document.getElementById("shutter").onclick = () => {
       this.shutterPressed = true;
       shutterAudio.play();
     };
 
-    this.camereEffect = 'none';
+    this.camereEffect = "none";
     cs380.utils.setInputBehavior(
-      'setting-effect',
-      (val) => { this.camereEffect = val; },
+      "setting-effect",
+      (val) => {
+        this.camereEffect = val;
+      },
       true,
       false
     );
@@ -236,9 +210,7 @@ export default class Assignment4 extends cs380.BaseApp {
   update(elapsed, dt) {
     // TODO: Update objects here
 
-    
     // OPTIONAL: render PickableObject to the picking buffer here
-
 
     // Render effect-applied scene to framebuffer of the photo if shutter is pressed
     if (this.shutterPressed) {
@@ -258,7 +230,6 @@ export default class Assignment4 extends cs380.BaseApp {
   renderScene() {
     // TODO: render scene *without* any effect
     // It would consist of every render(...) calls of objects in the scene
-
     /* Example code
     this.skybox.render(this.camera);
     this.animatedBackground.render(this.camera);
@@ -275,7 +246,7 @@ export default class Assignment4 extends cs380.BaseApp {
 
     if (!width) width = this.width;
     if (!height) height = this.height;
-    if (this.camereEffect == 'none') {
+    if (this.camereEffect == "none") {
       // no camera effect - render directly to the scene
       gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
       gl.viewport(0, 0, width, height);
