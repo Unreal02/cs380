@@ -32,17 +32,7 @@ class Framebuffer {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texImage2D(
-      gl.TEXTURE_2D,
-      0,
-      gl.RGB,
-      width,
-      height,
-      0,
-      gl.RGB,
-      gl.UNSIGNED_BYTE,
-      null
-    );
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, width, height, 0, gl.RGB, gl.UNSIGNED_BYTE, null);
 
     gl.framebufferTexture2D(
       gl.FRAMEBUFFER,
@@ -54,19 +44,9 @@ class Framebuffer {
 
     this.dbo = gl.createRenderbuffer();
     gl.bindRenderbuffer(gl.RENDERBUFFER, this.dbo);
-    gl.renderbufferStorage(
-      gl.RENDERBUFFER,
-      gl.DEPTH_COMPONENT16,
-      width,
-      height
-    );
+    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, width, height);
 
-    gl.framebufferRenderbuffer(
-      gl.FRAMEBUFFER,
-      gl.DEPTH_ATTACHMENT,
-      gl.RENDERBUFFER,
-      this.dbo
-    );
+    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, this.dbo);
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.bindRenderbuffer(gl.RENDERBUFFER, null);
@@ -79,10 +59,10 @@ class Pip {
     this.framebuffer = new Framebuffer();
     this.framebuffer.initialize(width, height);
 
-    const planeMeshData = cs380.primitives.generatePlane(1,1);
+    const planeMeshData = cs380.primitives.generatePlane(1, 1);
     const planeMesh = cs380.Mesh.fromData(planeMeshData);
     const shader = await cs380.buildShader(PipEdgeShader);
-    
+
     this.transform = new cs380.Transform();
     quat.rotateY(this.transform.localRotation, quat.create(), Math.PI);
 
@@ -105,9 +85,9 @@ class Pip {
     this.image.render(camera);
     gl.depthFunc(prevDepthFunc);
   }
-  finalize(){
-    for (const thing of this.thingsToClear){
-      thing.finalize();    
+  finalize() {
+    for (const thing of this.thingsToClear) {
+      thing.finalize();
     }
   }
 }
@@ -122,18 +102,15 @@ export default class Lab9App extends cs380.BaseApp {
 
     // Basic setup for camera
     this.camera = new cs380.Camera();
-    vec3.set(
-      this.camera.transform.localPosition,
-      0, 0, 5
-    );
+    vec3.set(this.camera.transform.localPosition, 0, 0, 5);
     mat4.perspective(
       this.camera.projectionMatrix,
-      45 * Math.PI / 180,
+      (45 * Math.PI) / 180,
       gl.canvas.clientWidth / gl.canvas.clientHeight,
       0.01,
       100
     );
-    const cameraCenter = vec3.create()
+    const cameraCenter = vec3.create();
     this.orbitControl = new cs380.utils.SimpleOrbitControl(this.camera, cameraCenter);
 
     // things to finalize()
@@ -141,14 +118,14 @@ export default class Lab9App extends cs380.BaseApp {
 
     // Rest of initialization below
     const textureLoader = cs380.TextureLoader.load({
-      uv_checker: 'resources/uv_checker.png',
+      uv_checker: "resources/uv_checker.png",
 
-      posX: 'resources/skybox/right.jpg',
-      negX: 'resources/skybox/left.jpg',
-      posY: 'resources/skybox/top.jpg',
-      negY: 'resources/skybox/bottom.jpg',
-      posZ: 'resources/skybox/front.jpg',
-      negZ: 'resources/skybox/back.jpg',
+      posX: "resources/skybox/right.jpg",
+      negX: "resources/skybox/left.jpg",
+      posY: "resources/skybox/top.jpg",
+      negY: "resources/skybox/bottom.jpg",
+      posZ: "resources/skybox/front.jpg",
+      negZ: "resources/skybox/back.jpg",
     });
 
     const shaderLoader = cs380.ShaderLoader.load({
@@ -171,7 +148,7 @@ export default class Lab9App extends cs380.BaseApp {
       [gl.TEXTURE_CUBE_MAP_POSITIVE_Y, textureLoaderResult.posY],
       [gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, textureLoaderResult.negY],
       [gl.TEXTURE_CUBE_MAP_POSITIVE_Z, textureLoaderResult.posZ],
-      [gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, textureLoaderResult.negZ]
+      [gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, textureLoaderResult.negZ],
     ]);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 
@@ -206,9 +183,12 @@ export default class Lab9App extends cs380.BaseApp {
     //create pip
     this.picture = new Pip();
     this.thingsToClear.push(this.picture);
-    await this.picture.initialize(width, height, 
+    await this.picture.initialize(
+      width,
+      height,
       vec3.fromValues(0.0, 0.75, 0.0), //translation
-      vec3.fromValues(0.5, 0.5, 0.5)); //scale
+      vec3.fromValues(0.5, 0.5, 0.5) //scale
+    );
   }
 
   finalize() {
@@ -221,11 +201,13 @@ export default class Lab9App extends cs380.BaseApp {
   update(elapsed, dt) {
     // Updates before rendering here
     this.orbitControl.update(dt);
-    
+
     // TODO: render to texture of plane this.picture using renderImage("put correct variables here").
     // render the objects function to the canvas using renderImage().
     // render the plane this.picture to the canvas.
-
+    this.renderImage(this.picture.framebuffer.fbo);
+    this.renderImage();
+    this.picture.render(this.camera);
   }
   renderScene() {
     this.skybox.render(this.camera);
