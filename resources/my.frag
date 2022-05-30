@@ -63,6 +63,7 @@ void main() {
     vec3 intensity = vec3(0.0, 0.0, 0.0);
     
     vec3 N = normalize(frag_normal.xyz);
+    vec3 V = normalize(normalize((W2C * vec4(0, 0, 0, 1)).xyz) - frag_pos.xyz);
     
     for (int i=0; i<numLights; i++){
         if (!lights[i].enabled) continue;
@@ -75,7 +76,6 @@ void main() {
             intensity += toonDiffuse(max(dot(N, L), 0.0)) * lights[i].illuminance * material.diffuseColor;
 
             // specular
-            vec3 V = normalize(vec4(0, 0, 0, 1) * W2C - frag_pos).xyz;
             vec3 H = normalize(L + V);
             float psi = dot(N, H);
             intensity += toonSpecular(max(pow(max(psi, 0.0), material.shininess), 0.0)) * lights[i].illuminance * material.specularColor;
@@ -90,7 +90,6 @@ void main() {
             intensity += toonDiffuse(coeff * max(dot(N, L), 0.0)) * lights[i].illuminance * material.diffuseColor;
 
             // specular
-            vec3 V = normalize(vec4(0, 0, 0, 1) * W2C - frag_pos).xyz;
             vec3 H = normalize(L + V);
             float psi = dot(N, H);
             intensity += toonSpecular(coeff * max(pow(max(psi, 0.0), material.shininess), 0.0)) * lights[i].illuminance * material.specularColor;
@@ -110,11 +109,14 @@ void main() {
             } // transition
             else coeff = 1.0; // inside
 
+            // 거리에 따른 계수
+            float dist = length(pos - frag_pos.xyz);
+            coeff /= pow(dist, 2.0);
+
             // diffuse
             intensity += toonDiffuse(coeff * max(dot(N, L), 0.0)) * lights[i].illuminance * material.diffuseColor;
 
             // specular
-            vec3 V = normalize(vec4(0, 0, 0, 1) * W2C - frag_pos).xyz;
             vec3 H = normalize(L + V);
             float psi = dot(N, H);
             intensity += toonSpecular(coeff * max(pow(max(psi, 0.0), material.shininess), 0.0)) * lights[i].illuminance * material.specularColor;
@@ -127,7 +129,6 @@ void main() {
 
     // outline
     if (material.toon) {
-        vec3 V = normalize(vec4(0, 0, 0, 1) * W2C - frag_pos).xyz;
         float outline = 1.0 - pow(abs(dot(N, V)), 2.0);
         outline = pow(outline, 5.0);
         outline = 1.0 - clamp(outline * 3.0, 0.0, 1.0);

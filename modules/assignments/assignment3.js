@@ -403,15 +403,15 @@ export default class Assignment3 extends cs380.BaseApp {
       <label for="light0-illuminance">Ambient Light</label>
       </div>
       <div>
-      <input type="range" min=0 max=1 value=1 step=0.01 id="light1-illuminance">
+      <input type="range" min=0 max=20 value=20 step=0.01 id="light1-illuminance">
       <label for="light1-illuminance">Red Light</label>
       </div>
       <div>
-      <input type="range" min=0 max=1 value=1 step=0.01 id="light2-illuminance">
+      <input type="range" min=0 max=20 value=20 step=0.01 id="light2-illuminance">
       <label for="light2-illuminance">Green Light</label>
       </div>
       <div>
-      <input type="range" min=0 max=1 value=1 step=0.01 id="light3-illuminance">
+      <input type="range" min=0 max=20 value=20 step=0.01 id="light3-illuminance">
       <label for="light3-illuminance">Blue Light</label>
       </div>
       <div>
