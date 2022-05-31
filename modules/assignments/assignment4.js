@@ -180,7 +180,7 @@ function createMyLights() {
   light5.type = LightType.DIRECTIONAL;
   light5.transform.lookAt([-1, -1, -1]);
 
-  return [light1, light2, light3];
+  return [light0, light1, light2, light3, light4, light5];
 }
 
 class MyBackground {
@@ -632,7 +632,6 @@ class MyAvatar {
 
   update(dt) {
     if (this.nextPoseList.length > 0) {
-      console.log("asdf");
       const nextPose = this.nextPoseList[0].pose;
       const interval = this.nextPoseList[0].interval;
       const lerpFunc = this.nextPoseList[0].lerpFunc;
@@ -736,7 +735,7 @@ class MyCubemap {
     this.thingsToClear.push(skyboxMesh);
     this.skybox = new Skybox(skyboxMesh, skyboxShader);
     this.skybox.uniforms.mainTexture = cubemap.id;
-    quat.rotateY(this.skybox.transform.localRotation, quat.create(), Math.PI);
+    quat.rotateX(this.skybox.transform.localRotation, quat.create(), Math.PI);
   }
 
   render(cam) {
@@ -756,7 +755,7 @@ export default class Assignment4 extends cs380.BaseApp {
     const { width, height } = gl.canvas.getBoundingClientRect();
     const aspectRatio = width / height;
     this.camera = new cs380.Camera();
-    vec3.set(this.camera.transform.localPosition, 0, 0, 40);
+    vec3.set(this.camera.transform.localPosition, 0, 0, 30);
     this.camera.transform.lookAt(vec3.fromValues(0, 0, -1));
     mat4.perspective(this.camera.projectionMatrix, (45 * Math.PI) / 180, aspectRatio, 0.01, 1000);
 
@@ -894,6 +893,38 @@ export default class Assignment4 extends cs380.BaseApp {
 
       <!-- OPTIONAL: Add more UI elements here --> 
 
+      <!-- light settings -->
+      <table>
+        <tr align="right">
+          <td>
+          <label for="light0-illuminance">Ambient Light</label>
+          <input type="range" min=0 max=1 value=0.1 step=0.01 id="light0-illuminance">
+          </td>
+          <td>
+          <label for="light4-illuminance">&nbsp;&nbsp;&nbsp;Point Light</label>
+          <input type="range" min=0 max=10 value=10 step=0.1 id="light4-illuminance">
+          </td>
+          <td>
+          <label for="light5-illuminance">&nbsp;&nbsp;&nbsp;Directional Light</label>
+          <input type="range" min=0 max=1 value=1 step=0.01 id="light5-illuminance">
+          </td>
+        </tr>
+        <tr align="right">
+          <td>
+          <label for="light1-illuminance">Red Light</label>
+          <input type="range" min=0 max=100 value=100 step=0.01 id="light1-illuminance">
+          </td>
+          <td>
+          <label for="light2-illuminance">&nbsp;&nbsp;&nbsp;Green Light</label>
+          <input type="range" min=0 max=100 value=100 step=0.01 id="light2-illuminance">
+          </td>
+          <td>
+          <label for="light3-illuminance">&nbsp;&nbsp;&nbsp;Blue Light</label>
+          <input type="range" min=0 max=100 value=100 step=0.01 id="light3-illuminance">
+          </td>
+        </tr>
+      </table>
+
       <h3>Basic requirements</h3>
       <ul>
         <li>Reuse HW1 Animated Background [1 pt]</li>
@@ -906,6 +937,25 @@ export default class Assignment4 extends cs380.BaseApp {
       Implement creative camera effects for your virtual camera booth. <br/>
       <strong>Have fun!</strong>
     `;
+
+    cs380.utils.setInputBehavior("light0-illuminance", (val) => {
+      this.lights[0].illuminance = [val, val, val];
+    });
+    cs380.utils.setInputBehavior("light1-illuminance", (val) => {
+      this.lights[1].illuminance = [val, 0, 0];
+    });
+    cs380.utils.setInputBehavior("light2-illuminance", (val) => {
+      this.lights[2].illuminance = [0, val, 0];
+    });
+    cs380.utils.setInputBehavior("light3-illuminance", (val) => {
+      this.lights[3].illuminance = [0, 0, val];
+    });
+    cs380.utils.setInputBehavior("light4-illuminance", (val) => {
+      this.lights[4].illuminance = [val, val, val];
+    });
+    cs380.utils.setInputBehavior("light5-illuminance", (val) => {
+      this.lights[5].illuminance = [val, val, val];
+    });
 
     const shutterAudio = document.getElementById("shutter-sfx");
     document.getElementById("shutter").onclick = () => {
