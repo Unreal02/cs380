@@ -5,6 +5,23 @@ import * as cs380 from "../cs380/cs380.js";
 
 import { UnlitTextureShader } from "../unlit_texture_shader.js";
 
+import { SolidShader } from "../solid_shader.js";
+import { VertexColorShader } from "../vertex_color_shader.js";
+import { TextureShader } from "../texture_shader.js";
+import { LightType, Light } from "../blinn_phong.js";
+import { Material, MyShader } from "../my.js";
+import {
+  generateCapsule,
+  generateCone,
+  generateCube,
+  generateCylinder,
+  generateHemisphere,
+  generateQuarterSphere,
+  generatePlane,
+  generateSphere,
+  generateUpperBody,
+} from "../cs380/primitives.js";
+
 class Framebuffer {
   constructor() {
     this.finalize();
@@ -128,15 +145,308 @@ class PhotoFilm {
   }
 }
 
+function createMyLights() {
+  const light0 = new Light();
+  light0.illuminance = [0.1, 0.1, 0.1];
+  light0.type = LightType.AMBIENT;
+
+  const light1 = new Light();
+  light1.illuminance = [1, 0, 0];
+  light1.type = LightType.SPOTLIGHT;
+  light1.transform.localPosition = [0, 10, 0];
+  light1.transform.localRotation = quat.fromEuler(quat.create(), 90, 0, 0);
+
+  const light2 = new Light();
+  light2.illuminance = [0, 1, 0];
+  light2.type = LightType.SPOTLIGHT;
+  light2.transform.localPosition = [-5, 10, 0];
+  light2.transform.lookAt([-4, 10, 0]);
+
+  const light3 = new Light();
+  light3.illuminance = [0, 0, 1];
+  light3.type = LightType.SPOTLIGHT;
+  light3.transform.localPosition = [5, 10, 0];
+  light3.transform.lookAt([4, 10, 0]);
+
+  const light4 = new Light();
+  light4.illuminance = [10, 10, 10];
+  light4.type = LightType.POINT;
+  light4.transform.localPosition = [2, 4, 2];
+
+  const light5 = new Light();
+  light5.illuminance = [1, 1, 1];
+  light5.type = LightType.DIRECTIONAL;
+  light5.transform.lookAt([-1, -1, -1]);
+
+  return [light0, light1, light2, light3, light4, light5];
+}
+
+class MyBackground {
+  constructor(myShader, textureShader, width, height) {
+    // background (not pickable)
+    const bgSize = 10;
+    const bgMesh = new cs380.Mesh();
+    this.background = new cs380.RenderObject(bgMesh, myShader);
+    this.background.transform.localPosition = [0, 0.7, 0];
+    const bgPlane = cs380.Mesh.fromData(generatePlane(bgSize, bgSize));
+    this.thingsToClear = [];
+    this.thingsToClear.push(bgMesh, bgPlane);
+    this.bgList = [];
+    const bgMaterial = new Material([1, 1, 1]);
+    bgMaterial.shininess = 300;
+
+    // add background component
+    const addBackgroundComponent = (name, size, pos, shader) => {
+      this[name] = new cs380.RenderObject(bgPlane, shader);
+      this[name].transform.setParent(this.background.transform);
+      this[name].transform.localPosition = pos;
+      this[name].transform.localScale = size;
+      this[name].uniforms.material = bgMaterial;
+      this.bgList.push(this[name]);
+    };
+
+    // background
+    addBackgroundComponent("bgD", [1, 1, 1], [0, -bgSize / 2, 0], myShader);
+    quat.rotateX(this.bgD.transform.localRotation, quat.create(), Math.PI / 2);
+    addBackgroundComponent("bgB", [1, 1, 1], [0, 0, -bgSize / 2], textureShader);
+    quat.rotateY(this.bgB.transform.localRotation, quat.create(), Math.PI);
+    this.bgB.framebuffer = new Framebuffer();
+    this.bgB.framebuffer.initialize(width, height);
+    this.bgB.uniforms.mainTexture = this.bgB.framebuffer.colorTexture;
+    this.thingsToClear.push(this.bgB.framebuffer);
+  }
+
+  setLights(lights) {
+    this.bgList.forEach((i) => (i.uniforms.lights = lights));
+  }
+
+  render(cam) {
+    this.bgList.forEach((i) => i.render(cam));
+  }
+
+  finalize() {
+    for (const thing of this.thingsToClear) {
+      thing.finalize();
+    }
+  }
+}
+
+class MyColorPlane {
+  constructor(shader) {
+    const bgMesh = new cs380.Mesh();
+    bgMesh.addAttribute(3); // position
+    bgMesh.addAttribute(3); // color
+    bgMesh.addVertexData(2, -2, -1, 0, 1, 0);
+    bgMesh.addVertexData(2, 2, -1, 0, 0, 1);
+    bgMesh.addVertexData(-2, 2, -1, 0, 0, 1);
+    bgMesh.addVertexData(-2, -2, -1, 1, 0, 0);
+    bgMesh.drawMode = gl.TRIANGLE_FAN;
+    bgMesh.initialize();
+    this.thingsToClear = [bgMesh];
+
+    this.object = new cs380.RenderObject(bgMesh, shader);
+  }
+
+  render(cam) {
+    this.object.render(cam);
+  }
+
+  finalize() {
+    for (const thing of this.thingsToClear) {
+      thing.finalize();
+    }
+  }
+}
+
+class MyTree {
+  constructor(shader) {
+    this.mesh = new cs380.Mesh();
+    this.thingsToClear = [];
+    this.thingsToClear.push(this.mesh, shader);
+    this.object = new cs380.RenderObject(this.mesh, shader);
+    this.object.uniforms.mainColor = [0, 0, 0];
+  }
+
+  render(cam) {
+    this.object.render(cam);
+  }
+
+  finalize() {
+    for (const thing of this.thingsToClear) {
+      thing.finalize();
+    }
+  }
+
+  draw(n, theta, p1, p2) {
+    const _drawTree = (n, theta, p1, p2) => {
+      if (n <= 0) return;
+      var p3 = vec3.create();
+      var p4 = vec3.create();
+      var p5 = vec3.create();
+      var v12 = vec3.create();
+      var v23 = vec3.create();
+      var vx = vec3.create();
+      var vy = vec3.create();
+      vec3.sub(v12, p2, p1);
+      vec3.scale(v23, vec3.fromValues(-v12[1], v12[0], v12[2]), 3);
+      var len = vec3.len(v12);
+      vec3.normalize(vx, v12);
+      vec3.normalize(vy, v23);
+      vec3.add(p3, p2, v23);
+      vec3.add(p4, p1, v23);
+      vec3.add(
+        p5,
+        p4,
+        vec3.add(
+          vec3.create(),
+          vec3.scale(vec3.create(), vx, len * Math.cos(theta) * Math.cos(theta)),
+          vec3.scale(vec3.create(), vy, len * Math.cos(theta) * Math.sin(theta))
+        )
+      );
+      this.mesh.addVertexData(...p1, ...p2, ...p3);
+      this.mesh.addVertexData(...p1, ...p3, ...p4);
+      this.mesh.addVertexData(...p4, ...p3, ...p5);
+      _drawTree(n - 1, theta, p4, p5);
+      _drawTree(n - 1, theta, p5, p3);
+    };
+
+    this.mesh.finalize();
+    this.mesh.addAttribute(3); // position
+    _drawTree(n, theta, p1, p2);
+    this.mesh.drawMode = gl.TRIANGLES;
+    this.mesh.initialize();
+  }
+}
+
+class MyDragon {
+  constructor(shader) {
+    this.meshes = [];
+    for (var i = 0; i < 5; i++) this.meshes.push(new cs380.Mesh());
+    this.objects = [];
+    for (var i in this.meshes) {
+      this.objects.push(new cs380.RenderObject(this.meshes[i], shader));
+    }
+    this.thingsToClear = [];
+    this.thingsToClear.push(...this.meshes);
+    for (var i = 0; i < 5; i++) this.draw(i, 12, [0, 0, 0], 0.4);
+  }
+
+  update(elapsed) {
+    for (var i = 0; i < 5; i++) {
+      var y = elapsed + 3.6 * i;
+      var dx = -Math.sin(elapsed) * 0.4;
+      while (y >= 6) y -= 6;
+      vec3.set(this.objects[i].transform.localPosition, 0.8 * i - 1.6 + dx, 3 - y, 1);
+      quat.rotateZ(this.objects[i].transform.localRotation, quat.create(), elapsed);
+    }
+  }
+
+  render(cam) {
+    this.objects.forEach((i) => i.render(cam));
+  }
+
+  finalize() {
+    for (const thing of this.thingsToClear) {
+      thing.finalize();
+    }
+  }
+
+  draw(idx, n, pos, size) {
+    const _drawDragon = (n, pos, segmentLength, dir) => {
+      const getRotateList = (n) => {
+        //  1: 왼쪽으로 꺾음
+        // -1: 오른쪽으로 꺾음
+        if (n == 0) return [];
+        if (n == 1) return [1];
+        var list1 = getRotateList(n - 1);
+        var list2 = list1
+          .map((n) => {
+            return -n;
+          })
+          .reverse();
+        return [...list1, 1, ...list2];
+      };
+      const dir2vec = (dir) => {
+        switch (dir) {
+          case 0: // 우
+            return vx;
+          case 1: // 상
+            return vy;
+          case 2: // 좌
+            return vec3.scale(vec3.create(), vx, -1);
+          case 3: // 하
+            return vec3.scale(vec3.create(), vy, -1);
+        }
+      };
+
+      var colorVal = ((dir % 2) + 1) * 0.5;
+      var color = vec3.fromValues(colorVal, colorVal, colorVal);
+      var vxt = vec3.fromValues(1, 0, 0);
+      var vyt = vec3.fromValues(0, 1, 0);
+      var vx = vec3.create();
+      var vy = vec3.create();
+      vec3.scale(vx, vxt, segmentLength);
+      vec3.scale(vy, vyt, segmentLength);
+
+      var rotateList = getRotateList(n);
+      var pointList = [];
+
+      // rotateList의 값대로 선분을 돌려가면서 pointList 채우기
+      pointList.push(pos);
+      pos = vec3.add(vec3.create(), pos, dir2vec(dir));
+      pointList.push(pos);
+      for (var rotate of rotateList) {
+        dir += rotate;
+        if (dir < 0) dir += 4;
+        if (dir >= 4) dir -= 4;
+        pos = vec3.add(vec3.create(), pos, dir2vec(dir));
+        pointList.push(pos);
+      }
+
+      // 삼각형들 그리기
+      for (var i = 2; i < pointList.length; i += 2) {
+        var p1 = pointList[i - 2];
+        var p2 = pointList[i - 1];
+        var p3 = pointList[i];
+        var p4 = vec3.create(); // p1, p2, p3, p4로 정사각형 구성
+        var middle = vec3.create();
+        vec3.scale(middle, vec3.add(vec3.create(), p1, p3), 0.5);
+        vec3.add(p4, middle, vec3.sub(vec3.create(), middle, p2));
+        this.meshes[idx].addVertexData(...p1, ...color, ...p2, ...color, ...p3, ...color);
+        this.meshes[idx].addVertexData(...p1, ...color, ...p3, ...color, ...p4, ...color);
+      }
+    };
+
+    this.meshes[idx].finalize();
+    this.meshes[idx].addAttribute(3); // position
+    this.meshes[idx].addAttribute(3); // color
+    for (var i = 0; i < 4; i++) _drawDragon(n, pos, size * Math.pow(0.67, n - 1), i);
+    this.meshes[idx].drawMode = gl.TRIANGLES;
+    this.meshes[idx].initialize();
+  }
+}
+
 export default class Assignment4 extends cs380.BaseApp {
   async initialize() {
     // Basic setup for camera
     const { width, height } = gl.canvas.getBoundingClientRect();
     const aspectRatio = width / height;
     this.camera = new cs380.Camera();
-    vec3.set(this.camera.transform.localPosition, 0, 2, 9);
-    this.camera.transform.lookAt(vec3.fromValues(0, -1, -9));
+    vec3.set(this.camera.transform.localPosition, 0, 3, 20);
+    this.camera.transform.lookAt(vec3.fromValues(0, -3, -20));
     mat4.perspective(this.camera.projectionMatrix, (45 * Math.PI) / 180, aspectRatio, 0.01, 1000);
+
+    this.textureCamera = new cs380.Camera();
+    vec3.set(this.textureCamera.transform.localPosition, 0, 0, 0);
+    mat4.ortho(
+      this.textureCamera.projectionMatrix,
+      -2 * aspectRatio,
+      +2 * aspectRatio,
+      -2,
+      +2,
+      -2,
+      +2
+    );
 
     this.width = width;
     this.height = height;
@@ -149,6 +459,44 @@ export default class Assignment4 extends cs380.BaseApp {
     this.thingsToClear.push(this.photo);
 
     // TODO: initialize your object + scene here
+
+    // SimpleOrbitControl
+    const orbitControlCenter = vec3.fromValues(0, 0, 0);
+    this.simpleOrbitControl = new cs380.utils.SimpleOrbitControl(this.camera, orbitControlCenter);
+    this.thingsToClear.push(this.simpleOrbitControl);
+
+    // initialize picking shader & buffer
+    const myShader = await cs380.buildShader(MyShader);
+    const pickingShader = await cs380.buildShader(cs380.PickingShader);
+    const solidShader = await cs380.buildShader(SolidShader);
+    const vertexColorShader = await cs380.buildShader(VertexColorShader);
+
+    const shaderLoader = await cs380.ShaderLoader.load({
+      textureShader: TextureShader.source,
+    });
+    const textureShader = new TextureShader();
+    this.thingsToClear.push(textureShader);
+    textureShader.initialize(shaderLoader.textureShader);
+
+    this.pickingBuffer = new cs380.PickingBuffer();
+    this.pickingBuffer.initialize(width, height);
+    this.thingsToClear.push(
+      myShader,
+      pickingShader,
+      solidShader,
+      vertexColorShader,
+      textureShader,
+      this.pickingBuffer
+    );
+
+    // initialize my lights, background, avatar
+    this.lights = createMyLights();
+    this.background = new MyBackground(myShader, textureShader, this.width, this.height);
+    this.background.setLights(this.lights);
+    this.colorPlane = new MyColorPlane(vertexColorShader);
+    this.tree = new MyTree(solidShader);
+    this.dragon = new MyDragon(vertexColorShader);
+    this.thingsToClear.push(this.background, this.colorPlane, this.tree);
 
     // Setup GUIs
     // TODO: add camera effects of your own
@@ -209,6 +557,11 @@ export default class Assignment4 extends cs380.BaseApp {
 
   update(elapsed, dt) {
     // TODO: Update objects here
+    this.simpleOrbitControl.update(dt);
+    var angle = (Math.sin(elapsed) * Math.PI) / 4;
+    if (angle < 0) angle += Math.PI / 2;
+    this.tree.draw(12, angle, [1, -2.1, 0], [1.4, -2, 0]);
+    this.dragon.update(elapsed);
 
     // OPTIONAL: render PickableObject to the picking buffer here
 
@@ -218,6 +571,18 @@ export default class Assignment4 extends cs380.BaseApp {
       this.renderImage(this.photo.framebuffer.fbo, this.photo.width, this.photo.height);
       this.photo.show(elapsed); // Initiates photo-printing animation
     }
+
+    // render tree into texture
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.background.bgB.framebuffer.fbo);
+    gl.viewport(0, 0, this.width, this.height);
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    gl.clearDepth(1.0);
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LESS);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    this.colorPlane.render(this.textureCamera);
+    this.tree.render(this.textureCamera);
+    this.dragon.render(this.textureCamera);
 
     // Render effect-applied scene to the screen
     this.renderImage(null);
@@ -236,6 +601,7 @@ export default class Assignment4 extends cs380.BaseApp {
     this.avatar.render(this.camera);
     ...
     */
+    this.background.render(this.camera);
   }
 
   renderImage(fbo = null, width = null, height = null) {
