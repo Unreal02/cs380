@@ -345,6 +345,10 @@ export function generateHemisphere(radius) {
       data.vertices.push(...p1, ...p2, ...p3);
       data.vertexNormals.push(...p0, ...p2, ...p1);
       data.vertexNormals.push(...p1, ...p2, ...p3);
+      data.vertices.push(...p0, ...p1, ...p2);
+      data.vertices.push(...p1, ...p3, ...p2);
+      data.vertexNormals.push(...p0, ...p1, ...p2);
+      data.vertexNormals.push(...p1, ...p3, ...p2);
     }
   }
 
