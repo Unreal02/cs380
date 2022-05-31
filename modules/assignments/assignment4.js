@@ -5,6 +5,7 @@ import * as cs380 from "../cs380/cs380.js";
 
 import { UnlitTextureShader } from "../unlit_texture_shader.js";
 
+import { Skybox, SkyboxShader } from "../skybox_shader.js";
 import { SolidShader } from "../solid_shader.js";
 import { VertexColorShader } from "../vertex_color_shader.js";
 import { TextureShader } from "../texture_shader.js";
@@ -713,6 +714,42 @@ class MyAvatar {
   }
 }
 
+class MyCubemap {
+  constructor(skyboxShader, textureLoader) {
+    const cubemap = new cs380.Cubemap();
+    this.thingsToClear = [];
+    this.thingsToClear.push(cubemap);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    cubemap.initialize([
+      [gl.TEXTURE_CUBE_MAP_POSITIVE_X, textureLoader.posX],
+      [gl.TEXTURE_CUBE_MAP_NEGATIVE_X, textureLoader.negX],
+      [gl.TEXTURE_CUBE_MAP_POSITIVE_Y, textureLoader.posY],
+      [gl.TEXTURE_CUBE_MAP_NEGATIVE_Y, textureLoader.negY],
+      [gl.TEXTURE_CUBE_MAP_POSITIVE_Z, textureLoader.posZ],
+      [gl.TEXTURE_CUBE_MAP_NEGATIVE_Z, textureLoader.negZ],
+    ]);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+
+    const cubeMeshData = cs380.primitives.generateCube();
+    const skyboxMesh = cs380.Mesh.fromData(cubeMeshData);
+
+    this.thingsToClear.push(skyboxMesh);
+    this.skybox = new Skybox(skyboxMesh, skyboxShader);
+    this.skybox.uniforms.mainTexture = cubemap.id;
+    quat.rotateY(this.skybox.transform.localRotation, quat.create(), Math.PI);
+  }
+
+  render(cam) {
+    this.skybox.render(cam);
+  }
+
+  finalize() {
+    for (const thing of this.thingsToClear) {
+      thing.finalize();
+    }
+  }
+}
+
 export default class Assignment4 extends cs380.BaseApp {
   async initialize() {
     // Basic setup for camera
@@ -759,11 +796,13 @@ export default class Assignment4 extends cs380.BaseApp {
     const vertexColorShader = await cs380.buildShader(VertexColorShader);
 
     const shaderLoader = await cs380.ShaderLoader.load({
+      skyboxShader: SkyboxShader.source,
       textureShader: TextureShader.source,
     });
     const textureShader = new TextureShader();
-    this.thingsToClear.push(textureShader);
     textureShader.initialize(shaderLoader.textureShader);
+    const skyboxShader = new SkyboxShader();
+    skyboxShader.initialize(shaderLoader.skyboxShader);
 
     this.pickingBuffer = new cs380.PickingBuffer();
     this.pickingBuffer.initialize(width, height);
@@ -773,8 +812,18 @@ export default class Assignment4 extends cs380.BaseApp {
       solidShader,
       vertexColorShader,
       textureShader,
+      skyboxShader,
       this.pickingBuffer
     );
+
+    const textureLoader = await cs380.TextureLoader.load({
+      posX: "resources/mySkybox/right.png",
+      negX: "resources/mySkybox/left.png",
+      posY: "resources/mySkybox/top.png",
+      negY: "resources/mySkybox/bottom.png",
+      posZ: "resources/mySkybox/front.png",
+      negZ: "resources/mySkybox/back.png",
+    });
 
     // initialize my lights, background, avatar
     this.lights = createMyLights();
@@ -785,7 +834,15 @@ export default class Assignment4 extends cs380.BaseApp {
     this.background.setLights(this.lights);
     this.avatar = new MyAvatar(myShader, pickingShader);
     this.avatar.setLights(this.lights);
-    this.thingsToClear.push(this.background, this.colorPlane, this.tree, this.dragon);
+    this.cubemap = new MyCubemap(skyboxShader, textureLoader);
+    this.thingsToClear.push(
+      this.background,
+      this.colorPlane,
+      this.tree,
+      this.dragon,
+      this.avatar,
+      this.cubemap
+    );
 
     // Event listener for interactions
     this.handleKeyDown = (e) => {
@@ -984,6 +1041,7 @@ export default class Assignment4 extends cs380.BaseApp {
     this.avatar.render(this.camera);
     ...
     */
+    this.cubemap.render(this.camera);
     this.background.render(this.camera);
     this.avatar.render(this.camera);
   }
