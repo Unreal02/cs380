@@ -224,6 +224,7 @@ export const cheese = {
     ...idle.rotation,
     body: [0, 0, -15],
     legRU: [0, 0, -15],
+    legRD: [90, 0, 0],
     armLD: [0, 0, 60],
     armRU: [0, 0, -90],
     armRD: [0, -180, -120],

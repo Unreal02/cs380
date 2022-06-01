@@ -4,7 +4,7 @@ import { vec3, mat4, quat } from "../cs380/gl-matrix.js";
 import * as cs380 from "../cs380/cs380.js";
 
 import { UnlitTextureShader } from "../unlit_texture_shader.js";
-
+import { MyPipShader } from "../my_pip_shader.js";
 import { Skybox, SkyboxShader } from "../skybox_shader.js";
 import { SolidShader } from "../solid_shader.js";
 import { VertexColorShader } from "../vertex_color_shader.js";
@@ -68,6 +68,44 @@ class Framebuffer {
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.bindRenderbuffer(gl.RENDERBUFFER, null);
     gl.bindTexture(gl.TEXTURE_2D, null);
+  }
+}
+
+class Pip {
+  async initialize(width, height, trans, scale) {
+    this.framebuffer = new Framebuffer();
+    this.framebuffer.initialize(width, height);
+
+    const planeMeshData = cs380.primitives.generatePlane(1, 1);
+    const planeMesh = cs380.Mesh.fromData(planeMeshData);
+    const shader = await cs380.buildShader(MyPipShader);
+
+    this.transform = new cs380.Transform();
+    quat.rotateY(this.transform.localRotation, quat.create(), Math.PI);
+
+    this.image = new cs380.RenderObject(planeMesh, shader);
+    this.image.uniforms.useScreenSpace = true;
+    this.image.uniforms.useColor = false;
+    this.image.uniforms.mainTexture = this.framebuffer.colorTexture;
+    this.image.uniforms.width = width;
+    this.image.uniforms.height = height;
+    this.image.transform.localPosition = trans;
+    this.image.transform.localScale = scale;
+    this.image.transform.setParent(this.transform);
+
+    this.thingsToClear = [shader, planeMesh, this.framebuffer];
+  }
+
+  render(camera) {
+    const prevDepthFunc = gl.getParameter(gl.DEPTH_FUNC);
+    gl.depthFunc(gl.ALWAYS);
+    this.image.render(camera);
+    gl.depthFunc(prevDepthFunc);
+  }
+  finalize() {
+    for (const thing of this.thingsToClear) {
+      thing.finalize();
+    }
   }
 }
 
@@ -834,13 +872,17 @@ export default class Assignment4 extends cs380.BaseApp {
     this.avatar = new MyAvatar(myShader, pickingShader);
     this.avatar.setLights(this.lights);
     this.cubemap = new MyCubemap(skyboxShader, textureLoader);
+    this.pip = new Pip();
+    await this.pip.initialize(width, height, [0, 0, 0], [2, 2, 2]);
+    this.pip.image.uniforms.cameraEffect = 0;
     this.thingsToClear.push(
       this.background,
       this.colorPlane,
       this.tree,
       this.dragon,
       this.avatar,
-      this.cubemap
+      this.cubemap,
+      this.pip
     );
 
     // Event listener for interactions
@@ -887,8 +929,10 @@ export default class Assignment4 extends cs380.BaseApp {
       <!-- TODO: Add camera effect lists here --> 
       <label for="setting-effect">Camera effect</label>
       <select id="setting-effect">
-        <option value="none">None</option>
-        <option value="my-effect">My camera effect</option>
+        <option value=0>None</option>
+        <option value=1>Color Inversion</option>
+        <option value=2>Grayscale</option>
+        <option value=3>Blur</option>
       </select> <br/>
 
       <!-- OPTIONAL: Add more UI elements here --> 
@@ -963,11 +1007,11 @@ export default class Assignment4 extends cs380.BaseApp {
       shutterAudio.play();
     };
 
-    this.camereEffect = "none";
+    this.cameraEffect = 0;
     cs380.utils.setInputBehavior(
       "setting-effect",
       (val) => {
-        this.camereEffect = val;
+        this.cameraEffect = Number(val);
       },
       true,
       false
@@ -1104,7 +1148,7 @@ export default class Assignment4 extends cs380.BaseApp {
 
     if (!width) width = this.width;
     if (!height) height = this.height;
-    if (this.camereEffect == "none") {
+    if (this.cameraEffect == 0) {
       // no camera effect - render directly to the scene
       gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
       gl.viewport(0, 0, width, height);
@@ -1132,18 +1176,15 @@ export default class Assignment4 extends cs380.BaseApp {
 
       // TODO: Remove the following line after you implemented.
       // (and please, remove any console.log(..) within the update loop from your submission)
-      console.log("TODO: camera effect (" + this.camereEffect + ")");
 
-      // Below codes will do no effectl it just renders the scene. You may (should?) delete this.
-      gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
-      gl.viewport(0, 0, width, height);
-      gl.clearColor(0.0, 0.0, 0.0, 1.0);
-      gl.clearDepth(1.0);
-      gl.enable(gl.DEPTH_TEST);
-      gl.depthFunc(gl.LESS);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, this.pip.framebuffer.fbo);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
       this.renderScene();
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      this.renderScene();
+      this.pip.image.uniforms.cameraEffect = this.cameraEffect;
+      this.pip.render(this.camera);
     }
   }
 }
