@@ -257,7 +257,6 @@ class MyBackground {
     // background
     addBackgroundComponent("bgD", [1, 1, 1], [0, -bgSize / 2, 0], myShader);
     quat.rotateX(this.bgD.transform.localRotation, quat.create(), Math.PI / 2);
-    this.bgD.uniforms.material.perlin = true;
     addBackgroundComponent("bgB", [1, 1, 1], [0, 0, -bgSize / 2], textureShader);
     quat.rotateY(this.bgB.transform.localRotation, quat.create(), Math.PI);
     this.bgB.framebuffer = new Framebuffer();
@@ -1016,7 +1015,7 @@ export default class Assignment4 extends cs380.BaseApp {
       this.lights[5].illuminance = [val, val, val];
     });
     cs380.utils.setCheckboxBehavior("perlin", (val) => {
-      this.background.bgB.uniforms.material.perlin = val;
+      this.background.bgD.uniforms.material.perlin = val;
     });
 
     const shutterAudio = document.getElementById("shutter-sfx");
