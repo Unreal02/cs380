@@ -42,7 +42,5 @@ export class MyPipShader extends cs380.BaseShader {
     this.setUniformFloat(kv, "width", 0);
     this.setUniformFloat(kv, "height", 0);
     this.setUniformInt(kv, "cameraEffect", 0);
-
-    console.log(kv["cameraEffect"]);
   }
 }

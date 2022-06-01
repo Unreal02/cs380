@@ -24,6 +24,15 @@ import {
 } from "../cs380/primitives.js";
 import * as pose from "./assignment2_pose.js";
 
+const CameraEffect = {
+  NONE: 0,
+  COLOR_INVERSION: 1,
+  GRAYSCALE: 2,
+  BLUR: 3,
+  FISHEYE: 4,
+  CHROMATIC_ABERRATION: 5,
+};
+
 class Framebuffer {
   constructor() {
     this.finalize();
@@ -873,8 +882,8 @@ export default class Assignment4 extends cs380.BaseApp {
     this.avatar.setLights(this.lights);
     this.cubemap = new MyCubemap(skyboxShader, textureLoader);
     this.pip = new Pip();
-    await this.pip.initialize(width, height, [0, 0, 0], [2, 2, 2]);
-    this.pip.image.uniforms.cameraEffect = 0;
+    await this.pip.initialize(width * 3, height * 3, [0, 0, 0], [2, 2, 2]);
+    this.pip.image.uniforms.cameraEffect = CameraEffect.NONE;
     this.thingsToClear.push(
       this.background,
       this.colorPlane,
@@ -933,6 +942,8 @@ export default class Assignment4 extends cs380.BaseApp {
         <option value=1>Color Inversion</option>
         <option value=2>Grayscale</option>
         <option value=3>Blur</option>
+        <option value=4>Fish-eye</option>
+        <option value=5>Chromatic Aberration</option>
       </select> <br/>
 
       <!-- OPTIONAL: Add more UI elements here --> 
@@ -1007,7 +1018,7 @@ export default class Assignment4 extends cs380.BaseApp {
       shutterAudio.play();
     };
 
-    this.cameraEffect = 0;
+    this.cameraEffect = CameraEffect.NONE;
     cs380.utils.setInputBehavior(
       "setting-effect",
       (val) => {
@@ -1148,7 +1159,22 @@ export default class Assignment4 extends cs380.BaseApp {
 
     if (!width) width = this.width;
     if (!height) height = this.height;
-    if (this.cameraEffect == 0) {
+
+    // fisheye를 위해 camera 시야각 조정
+    const aspectRatio = width / height;
+    if (this.cameraEffect == CameraEffect.FISHEYE) {
+      mat4.perspective(
+        this.camera.projectionMatrix,
+        (160 * Math.PI) / 180,
+        aspectRatio,
+        0.01,
+        1000
+      );
+    } else {
+      mat4.perspective(this.camera.projectionMatrix, (45 * Math.PI) / 180, aspectRatio, 0.01, 1000);
+    }
+
+    if (this.cameraEffect == CameraEffect.NONE) {
       // no camera effect - render directly to the scene
       gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
       gl.viewport(0, 0, width, height);
@@ -1178,9 +1204,11 @@ export default class Assignment4 extends cs380.BaseApp {
       // (and please, remove any console.log(..) within the update loop from your submission)
 
       gl.bindFramebuffer(gl.FRAMEBUFFER, this.pip.framebuffer.fbo);
+      gl.viewport(0, 0, width * 3, height * 3);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       this.renderScene();
       gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+      gl.viewport(0, 0, width, height);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       this.renderScene();
       this.pip.image.uniforms.cameraEffect = this.cameraEffect;
