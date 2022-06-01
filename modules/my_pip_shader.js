@@ -20,6 +20,7 @@ export class MyPipShader extends cs380.BaseShader {
 
       // Shader-specific uniforms
       mainTexture: gl.getUniformLocation(this.program, "mainTexture"),
+      depthTexture: gl.getUniformLocation(this.program, "depthTexture"),
       solidColor: gl.getUniformLocation(this.program, "solidColor"),
       useColor: gl.getUniformLocation(this.program, "useColor"),
       useScreenSpace: gl.getUniformLocation(this.program, "useScreenSpace"),
@@ -36,6 +37,7 @@ export class MyPipShader extends cs380.BaseShader {
 
     // Set shader-specific uniforms here
     this.setUniformTexture(kv, "mainTexture", 0);
+    this.setUniformTexture(kv, "depthTexture", 1);
     this.setUniformVec3(kv, "solidColor", 1, 1, 1);
     this.setUniformInt(kv, "useColor", 0);
     this.setUniformInt(kv, "useScreenSpace", 0);

@@ -3,13 +3,14 @@ import { vec3, mat4, quat } from "../cs380/gl-matrix.js";
 
 import * as cs380 from "../cs380/cs380.js";
 
+import { LightType, Light } from "../blinn_phong.js";
 import { UnlitTextureShader } from "../unlit_texture_shader.js";
 import { MyPipShader } from "../my_pip_shader.js";
 import { Skybox, SkyboxShader } from "../skybox_shader.js";
 import { SolidShader } from "../solid_shader.js";
 import { VertexColorShader } from "../vertex_color_shader.js";
 import { TextureShader } from "../texture_shader.js";
-import { LightType, Light } from "../blinn_phong.js";
+import { MyDepthShader } from "../my_depth.js";
 import { Material, MyShader } from "../my.js";
 import {
   generateCapsule,
@@ -31,6 +32,7 @@ const CameraEffect = {
   BLUR: 3,
   FISHEYE: 4,
   CHROMATIC_ABERRATION: 5,
+  DEPTH_OF_FIELD: 6,
 };
 
 class Framebuffer {
@@ -85,6 +87,9 @@ class Pip {
     this.framebuffer = new Framebuffer();
     this.framebuffer.initialize(width, height);
 
+    this.depthBuffer = new Framebuffer();
+    this.depthBuffer.initialize(width, height);
+
     const planeMeshData = cs380.primitives.generatePlane(1, 1);
     const planeMesh = cs380.Mesh.fromData(planeMeshData);
     const shader = await cs380.buildShader(MyPipShader);
@@ -96,6 +101,7 @@ class Pip {
     this.image.uniforms.useScreenSpace = true;
     this.image.uniforms.useColor = false;
     this.image.uniforms.mainTexture = this.framebuffer.colorTexture;
+    this.image.uniforms.depthTexture = this.depthBuffer.colorTexture;
     this.image.uniforms.width = width;
     this.image.uniforms.height = height;
     this.image.transform.localPosition = trans;
@@ -269,8 +275,8 @@ class MyBackground {
     this.bgList.forEach((i) => (i.uniforms.lights = lights));
   }
 
-  render(cam) {
-    this.bgList.forEach((i) => i.render(cam));
+  render(cam, shader) {
+    this.bgList.forEach((i) => i.render(cam, shader));
   }
 
   finalize() {
@@ -707,8 +713,8 @@ class MyAvatar {
     }
   }
 
-  render(cam) {
-    this.avatarList.forEach((i) => i.render(cam));
+  render(cam, shader) {
+    this.avatarList.forEach((i) => i.render(cam, shader));
   }
 
   finalize() {
@@ -785,8 +791,8 @@ class MyCubemap {
     quat.rotateX(this.skybox.transform.localRotation, quat.create(), Math.PI);
   }
 
-  render(cam) {
-    this.skybox.render(cam);
+  render(cam, shader) {
+    this.skybox.render(cam, shader);
   }
 
   finalize() {
@@ -840,6 +846,7 @@ export default class Assignment4 extends cs380.BaseApp {
     const pickingShader = await cs380.buildShader(cs380.PickingShader);
     const solidShader = await cs380.buildShader(SolidShader);
     const vertexColorShader = await cs380.buildShader(VertexColorShader);
+    this.myDepthShader = await cs380.buildShader(MyDepthShader);
 
     const shaderLoader = await cs380.ShaderLoader.load({
       skyboxShader: SkyboxShader.source,
@@ -859,6 +866,7 @@ export default class Assignment4 extends cs380.BaseApp {
       vertexColorShader,
       textureShader,
       skyboxShader,
+      this.myDepthShader,
       this.pickingBuffer
     );
 
@@ -944,6 +952,7 @@ export default class Assignment4 extends cs380.BaseApp {
         <option value=3>Blur</option>
         <option value=4>Fish-eye</option>
         <option value=5>Chromatic Aberration</option>
+        <option value=6>Depth of Field</option>
       </select> <br/>
 
       <!-- OPTIONAL: Add more UI elements here --> 
@@ -1143,7 +1152,7 @@ export default class Assignment4 extends cs380.BaseApp {
     this.photo.render(this.camera);
   }
 
-  renderScene() {
+  renderScene(shader) {
     // TODO: render scene *without* any effect
     // It would consist of every render(...) calls of objects in the scene
     /* Example code
@@ -1152,9 +1161,9 @@ export default class Assignment4 extends cs380.BaseApp {
     this.avatar.render(this.camera);
     ...
     */
-    this.cubemap.render(this.camera);
-    this.background.render(this.camera);
-    this.avatar.render(this.camera);
+    this.cubemap.render(this.camera, shader);
+    this.background.render(this.camera, shader);
+    this.avatar.render(this.camera, shader);
   }
 
   renderImage(fbo = null, width = null, height = null) {
@@ -1209,14 +1218,23 @@ export default class Assignment4 extends cs380.BaseApp {
       // TODO: Remove the following line after you implemented.
       // (and please, remove any console.log(..) within the update loop from your submission)
 
+      // render to texture
       gl.bindFramebuffer(gl.FRAMEBUFFER, this.pip.framebuffer.fbo);
       gl.viewport(0, 0, width * 3, height * 3);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       this.renderScene();
+
+      // render to depth buffer
+      gl.bindFramebuffer(gl.FRAMEBUFFER, this.pip.depthBuffer.fbo);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      this.renderScene(this.myDepthShader);
+
+      // render to screen
       gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
       gl.viewport(0, 0, width, height);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-      this.renderScene();
+
+      // render pip
       this.pip.image.uniforms.cameraEffect = this.cameraEffect;
       this.pip.render(this.camera);
     }
