@@ -418,3 +418,87 @@ export function generateUpperBody(sides = 64) {
 
   return data;
 }
+
+export function generateTetrahedron(radius = 1) {
+  const data = {
+    vertices: [],
+    vertexNormals: [],
+    textures: [],
+    indices: [],
+  };
+
+  const addTri = (p0, p1, p2) => {
+    var avg = vec3.add(vec3.create(), p0, p1);
+    avg = vec3.add(vec3.create(), avg, p2);
+    avg = vec3.scale(vec3.create(), avg, 1 / 3);
+    avg = vec3.normalize(vec3.create(), avg);
+    data.vertices.push(...p0, ...p1, ...p2);
+    data.vertexNormals.push(...avg, ...avg, ...avg);
+  };
+
+  const angle2xyz = (theta, phi) => [
+    radius * Math.cos(theta) * Math.sin(phi),
+    radius * Math.cos(phi),
+    radius * -Math.sin(theta) * Math.sin(phi),
+  ];
+
+  const p0 = vec3.scale(vec3.create(), [0, 1, 0], radius);
+  const p1 = vec3.scale(vec3.create(), angle2xyz(0, Math.PI - Math.atan(2 * Math.sqrt(2))), radius);
+  const p2 = vec3.scale(
+    vec3.create(),
+    angle2xyz((2 / 3) * Math.PI, Math.PI - Math.atan(2 * Math.sqrt(2))),
+    radius
+  );
+  const p3 = vec3.scale(
+    vec3.create(),
+    angle2xyz((4 / 3) * Math.PI, Math.PI - Math.atan(2 * Math.sqrt(2))),
+    radius
+  );
+
+  addTri(p0, p1, p2);
+  addTri(p0, p2, p3);
+  addTri(p0, p3, p1);
+  addTri(p1, p3, p2);
+
+  return data;
+}
+
+export function generateOctahedron(radius = 1) {
+  const data = {
+    vertices: [],
+    vertexNormals: [],
+    textures: [],
+    indices: [],
+  };
+
+  const addTri = (p0, p1, p2) => {
+    var avg = vec3.add(vec3.create(), p0, p1);
+    avg = vec3.add(vec3.create(), avg, p2);
+    avg = vec3.scale(vec3.create(), avg, 1 / 3);
+    avg = vec3.normalize(vec3.create(), avg);
+    data.vertices.push(...p0, ...p1, ...p2);
+    data.vertexNormals.push(...avg, ...avg, ...avg);
+  };
+
+  const p0 = vec3.scale(vec3.create(), [0, -1, 0], radius);
+  const p1 = vec3.scale(vec3.create(), [1, 0, 0], radius);
+  const p2 = vec3.scale(vec3.create(), [0, 0, 1], radius);
+  const p3 = vec3.scale(vec3.create(), [-1, 0, 0], radius);
+  const p4 = vec3.scale(vec3.create(), [0, 0, -1], radius);
+  const p5 = vec3.scale(vec3.create(), [0, 1, 0], radius);
+
+  addTri(p0, p1, p2);
+  addTri(p0, p2, p3);
+  addTri(p0, p3, p4);
+  addTri(p0, p4, p1);
+  addTri(p5, p2, p1);
+  addTri(p5, p3, p2);
+  addTri(p5, p4, p3);
+  addTri(p5, p1, p4);
+
+  return data;
+}
+
+export function generateDodecahedron(radius) {}
+
+export function generateIcosahedron(radius) {}

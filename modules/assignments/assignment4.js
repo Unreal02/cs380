@@ -22,6 +22,8 @@ import {
   generatePlane,
   generateSphere,
   generateUpperBody,
+  generateTetrahedron,
+  generateOctahedron,
 } from "../cs380/primitives.js";
 import * as pose from "./assignment2_pose.js";
 
@@ -766,6 +768,48 @@ class MyAvatar {
   }
 }
 
+class MyPolyhedrons {
+  constructor(shader) {
+    this.thingsToClear = [];
+
+    const whiteMaterial = new Material();
+    whiteMaterial.shininess = 300;
+
+    const tetrahedronMesh = cs380.Mesh.fromData(generateTetrahedron());
+    const octahedronMesh = cs380.Mesh.fromData(generateOctahedron());
+    this.thingsToClear.push(tetrahedronMesh, octahedronMesh);
+
+    this.tetrahedron = new cs380.RenderObject(tetrahedronMesh, shader);
+    this.tetrahedron.transform.localPosition = [-5, 0, 5];
+
+    this.octahedron = new cs380.RenderObject(octahedronMesh, shader);
+    this.octahedron.transform.localPosition = [-5, 0, 3];
+
+    this.objects = [this.tetrahedron, this.octahedron];
+
+    this.setMaterial(whiteMaterial);
+  }
+
+  render(cam, shader) {
+    var asdf = 0;
+    this.objects.forEach((i) => i.render(cam, shader));
+  }
+
+  finalize() {
+    for (const thing of this.thingsToClear) {
+      thing.finalize();
+    }
+  }
+
+  setLights(lights) {
+    this.objects.forEach((i) => (i.uniforms.lights = lights));
+  }
+
+  setMaterial(material) {
+    this.objects.forEach((i) => (i.uniforms.material = material));
+  }
+}
+
 class MyCubemap {
   constructor(skyboxShader, textureLoader) {
     const cubemap = new cs380.Cubemap();
@@ -888,6 +932,8 @@ export default class Assignment4 extends cs380.BaseApp {
     this.background.setLights(this.lights);
     this.avatar = new MyAvatar(myShader, pickingShader);
     this.avatar.setLights(this.lights);
+    this.polyhedrons = new MyPolyhedrons(myShader);
+    this.polyhedrons.setLights(this.lights);
     this.cubemap = new MyCubemap(skyboxShader, textureLoader);
     this.pip = new Pip();
     await this.pip.initialize(width * 3, height * 3, [0, 0, 0], [2, 2, 2]);
@@ -898,6 +944,7 @@ export default class Assignment4 extends cs380.BaseApp {
       this.tree,
       this.dragon,
       this.avatar,
+      this.polyhedrons,
       this.cubemap,
       this.pip
     );
@@ -1042,6 +1089,11 @@ export default class Assignment4 extends cs380.BaseApp {
       true,
       false
     );
+
+    // GL settings
+    gl.enable(gl.CULL_FACE);
+    gl.cullFace(gl.BACK);
+    gl.frontFace(gl.CCW);
   }
 
   onKeyDown(key) {
@@ -1164,6 +1216,7 @@ export default class Assignment4 extends cs380.BaseApp {
     this.cubemap.render(this.camera, shader);
     this.background.render(this.camera, shader);
     this.avatar.render(this.camera, shader);
+    this.polyhedrons.render(this.camera, shader);
   }
 
   renderImage(fbo = null, width = null, height = null) {
