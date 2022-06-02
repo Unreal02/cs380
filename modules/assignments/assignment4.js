@@ -766,6 +766,10 @@ class MyAvatar {
     this.body.transform.localPosition = [-0.3, 2, 0];
     this.body0.transform.localPosition = [0, 0, 0];
   }
+
+  setToon(val) {
+    this.avatarList.forEach((i) => (i.uniforms.material.toon = val));
+  }
 }
 
 class MyPolyhedrons {
@@ -1006,6 +1010,8 @@ export default class Assignment4 extends cs380.BaseApp {
 
       <label for="perlin">Perlin Noise</label>
       <input type="checkbox" id="perlin">
+      <label for="toon">Toon Shading</label>
+      <input type="checkbox" id="toon">
 
       <!-- light settings -->
       <table>
@@ -1072,6 +1078,9 @@ export default class Assignment4 extends cs380.BaseApp {
     });
     cs380.utils.setCheckboxBehavior("perlin", (val) => {
       this.background.bgD.uniforms.material.perlin = val;
+    });
+    cs380.utils.setCheckboxBehavior("toon", (val) => {
+      this.avatar.setToon(val);
     });
 
     const shutterAudio = document.getElementById("shutter-sfx");
