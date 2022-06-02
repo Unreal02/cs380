@@ -19,30 +19,26 @@ uniform float width;
 uniform float height;
 uniform int cameraEffect;
 
-void pixels_3by3(inout vec4 n[9], sampler2D tex, vec2 coord)
-{
-  float w = 3.0 / width; //interval of u between two fragments pixel
-  float h = 3.0 / height; //interval of v between two fragments pixel
-
-  //TODO: get 9 pixels in vec4 array, with the center of current fragment
-  // Define n[0], n[1], ... n[8] respectively. Refer to the n[4] put correct coordinate to each pixel.
-  n[0] = texture(tex, coord + vec2(-w, -h));
-  n[1] = texture(tex, coord + vec2(0, -h));
-  n[2] = texture(tex, coord + vec2(w, -h));
-  n[3] = texture(tex, coord + vec2(-w, 0));
-  n[4] = texture(tex, coord);
-  n[5] = texture(tex, coord + vec2(w, 0));
-  n[6] = texture(tex, coord + vec2(-w, h));
-  n[7] = texture(tex, coord + vec2(0, h));
-  n[8] = texture(tex, coord + vec2(w, h));
+float gaussian(int x, int y, float sigma) {
+  return exp(-(pow(float(x), 2.0) + pow(float(y), 2.0)) / pow(sigma, 2.0)) / pow(sigma, 2.0);
 }
 
-vec3 blur() {
-  vec4 n[9];
-  pixels_3by3(n, mainTexture, uv);
+vec3 blur(float sigma) {
+  float w = 3.0 / width; //interval of u between two fragments pixel
+  float h = 3.0 / height; //interval of v between two fragments pixel
   vec3 avg = vec3(0);
-  for(int i = 0; i < 9; i++) avg += n[i].rgb;
-  avg /= 9.0;
+  float sum = 0.0;
+  int range;
+  for (int i = 0; ; i++) if (exp(-pow(float(i), 2.0) / pow(sigma, 2.0)) < 0.01) {
+    range = i;
+    break;
+  }
+  for (int i = -range; i <= range; i++) for (int j = -range; j <= range; j++) {
+    float coeff = gaussian(i, j, sigma);
+    sum += coeff;
+    avg += coeff * texture(mainTexture, uv + vec2(w * float(i), h * float(j))).rgb;
+  }
+  avg /= sum;
   return avg;
 }
 
@@ -62,7 +58,7 @@ void main() {
       output_color.rgb = vec3(gray);
       break;
     case BLUR:
-      output_color.rgb = blur();
+      output_color.rgb = blur(3.0);
       break;
     case FISHEYE:
       vec2 center = vec2(width / 2.0, height / 2.0);
@@ -86,8 +82,7 @@ void main() {
       break;
     case DEPTH_OF_FIELD:
       float depth = texture(depthTexture, uv).r * 100.0;
-      if (depth > 29.0 && depth < 31.0) output_color.rgb = color;
-      else output_color.rgb = blur();
+      output_color.rgb = blur(abs(30.0 - depth) / 5.0);
       break;
   }
 }
