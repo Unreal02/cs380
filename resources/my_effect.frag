@@ -81,9 +81,10 @@ void main() {
       );
       break;
     case DEPTH_OF_FIELD:
-      float depth = texture(depthTexture, uv).r * 100.0;
+      vec3 depth_vector = texture(depthTexture, uv).rgb;
+      float depth = depth_vector.r * 25.0 + depth_vector.g * 25.0 + depth_vector.b * 25.0;
       if (abs(30.0 - depth) < 1.0) output_color.rgb = texture(mainTexture, uv).rgb;
-      output_color.rgb = blur((abs(30.0 - depth) - 1.0) / 5.0);
+      else output_color.rgb = blur((abs(30.0 - depth) - 1.0) / 3.0);
       break;
   }
 }
