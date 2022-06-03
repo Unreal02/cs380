@@ -89,6 +89,9 @@ class Pip {
     this.framebuffer = new Framebuffer();
     this.framebuffer.initialize(width, height);
 
+    this.bigBuffer = new Framebuffer();
+    this.bigBuffer.initialize(width * 5, height * 5);
+
     this.depthBuffer = new Framebuffer();
     this.depthBuffer.initialize(width, height);
 
@@ -104,6 +107,7 @@ class Pip {
     this.image.uniforms.useColor = false;
     this.image.uniforms.mainTexture = this.framebuffer.colorTexture;
     this.image.uniforms.depthTexture = this.depthBuffer.colorTexture;
+    this.image.uniforms.bigTexture = this.bigBuffer.colorTexture;
     this.image.uniforms.width = width;
     this.image.uniforms.height = height;
     this.image.transform.localPosition = trans;
@@ -780,16 +784,23 @@ class MyPolyhedrons {
     whiteMaterial.shininess = 300;
 
     const tetrahedronMesh = cs380.Mesh.fromData(generateTetrahedron());
+    const cubeMesh = cs380.Mesh.fromData(
+      generateCube(2 / Math.sqrt(3), 2 / Math.sqrt(3), 2 / Math.sqrt(3))
+    );
     const octahedronMesh = cs380.Mesh.fromData(generateOctahedron());
     this.thingsToClear.push(tetrahedronMesh, octahedronMesh);
 
     this.tetrahedron = new cs380.RenderObject(tetrahedronMesh, shader);
-    this.tetrahedron.transform.localPosition = [-5, 0, 5];
+    this.tetrahedron.transform.localPosition = [-6, -3, 6];
+
+    this.cube = new cs380.RenderObject(cubeMesh, shader);
+    this.cube.transform.localPosition = [-6, -1.5, 3];
 
     this.octahedron = new cs380.RenderObject(octahedronMesh, shader);
-    this.octahedron.transform.localPosition = [-5, 0, 3];
+    this.octahedron.transform.localPosition = [-6, 0, 0];
 
-    this.objects = [this.tetrahedron, this.octahedron];
+    this.objects = [this.tetrahedron, this.cube, this.octahedron];
+    this.objects.forEach((i) => (i.transform.localScale = [1.5, 1.5, 1.5]));
 
     this.setMaterial(whiteMaterial);
   }
@@ -940,7 +951,7 @@ export default class Assignment4 extends cs380.BaseApp {
     this.polyhedrons.setLights(this.lights);
     this.cubemap = new MyCubemap(skyboxShader, textureLoader);
     this.pip = new Pip();
-    await this.pip.initialize(width * 3, height * 3, [0, 0, 0], [2, 2, 2]);
+    await this.pip.initialize(width, height, [0, 0, 0], [2, 2, 2]);
     this.pip.image.uniforms.cameraEffect = CameraEffect.NONE;
     this.thingsToClear.push(
       this.background,
@@ -1281,22 +1292,41 @@ export default class Assignment4 extends cs380.BaseApp {
       // (and please, remove any console.log(..) within the update loop from your submission)
 
       // render to texture
-      gl.bindFramebuffer(gl.FRAMEBUFFER, this.pip.framebuffer.fbo);
-      gl.viewport(0, 0, width * 3, height * 3);
+      if (this.cameraEffect == CameraEffect.FISHEYE) {
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.pip.framebuffer.fbo);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.pip.bigBuffer.fbo);
+        gl.viewport(0, 0, width * 5, height * 5);
+      } else {
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.pip.bigBuffer.fbo);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.pip.framebuffer.fbo);
+        gl.viewport(0, 0, width, height);
+      }
+      gl.clearColor(0.0, 0.0, 0.0, 1.0);
+      gl.clearDepth(1.0);
+      gl.enable(gl.DEPTH_TEST);
+      gl.depthFunc(gl.LESS);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       this.renderScene();
 
       // render to depth buffer
       gl.bindFramebuffer(gl.FRAMEBUFFER, this.pip.depthBuffer.fbo);
+      gl.clearColor(0.0, 0.0, 0.0, 1.0);
+      gl.clearDepth(1.0);
+      gl.enable(gl.DEPTH_TEST);
+      gl.depthFunc(gl.LESS);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       this.renderScene(this.myDepthShader);
 
-      // render to screen
+      // render pip to screen
       gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+      gl.clearColor(0.0, 0.0, 0.0, 1.0);
+      gl.clearDepth(1.0);
+      gl.enable(gl.DEPTH_TEST);
+      gl.depthFunc(gl.LESS);
       gl.viewport(0, 0, width, height);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-      // render pip
       this.pip.image.uniforms.cameraEffect = this.cameraEffect;
       this.pip.render(this.camera);
     }

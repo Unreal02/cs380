@@ -15,6 +15,7 @@ out vec4 output_color;
 
 uniform sampler2D mainTexture;
 uniform sampler2D depthTexture;
+uniform sampler2D bigTexture;
 uniform float width;
 uniform float height;
 uniform int cameraEffect;
@@ -24,8 +25,8 @@ float gaussian(int x, int y, float sigma) {
 }
 
 vec3 blur(float sigma) {
-  float w = 3.0 / width; //interval of u between two fragments pixel
-  float h = 3.0 / height; //interval of v between two fragments pixel
+  float w = 1.0 / width; //interval of u between two fragments pixel
+  float h = 1.0 / height; //interval of v between two fragments pixel
   vec3 avg = vec3(0);
   float sum = 0.0;
   int range;
@@ -44,17 +45,16 @@ vec3 blur(float sigma) {
 
 void main() {
   output_color = vec4(vec3(0), 1);
-  vec3 color = texture(mainTexture, uv).rgb;
 
   switch(cameraEffect) {
     case NONE:
-      output_color.rgb = color;
+      output_color.rgb = texture(mainTexture, uv).rgb;
       break;
     case COLOR_INVERSION:
-      output_color.rgb = vec3(1) - color;
+      output_color.rgb = vec3(1) - texture(mainTexture, uv).rgb;
       break;
     case GRAYSCALE:
-      float gray = dot(color, vec3(0.299, 0.587, 0.114));
+      float gray = dot(texture(mainTexture, uv).rgb, vec3(0.299, 0.587, 0.114));
       output_color.rgb = vec3(gray);
       break;
     case BLUR:
@@ -68,7 +68,7 @@ void main() {
       float cam_angle = 80.0 * 3.1415926 / 180.0;
       if(optical_angle < cam_angle) {
         vec2 target = 0.5 / tan(cam_angle) * tan(optical_angle) * normalize(from_center);
-        output_color.rgb = texture(mainTexture, target + vec2(0.5)).rgb;
+        output_color.rgb = texture(bigTexture, target + vec2(0.5)).rgb;
       }
       else output_color.rgb = vec3(0);
       break;
@@ -82,7 +82,8 @@ void main() {
       break;
     case DEPTH_OF_FIELD:
       float depth = texture(depthTexture, uv).r * 100.0;
-      output_color.rgb = blur(abs(30.0 - depth) / 5.0);
+      if (abs(30.0 - depth) < 1.0) output_color.rgb = texture(mainTexture, uv).rgb;
+      output_color.rgb = blur((abs(30.0 - depth) - 1.0) / 5.0);
       break;
   }
 }
