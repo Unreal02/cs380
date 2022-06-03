@@ -430,7 +430,6 @@ export function generateTetrahedron(radius = 1) {
   const addTri = (p0, p1, p2) => {
     var avg = vec3.add(vec3.create(), p0, p1);
     avg = vec3.add(vec3.create(), avg, p2);
-    avg = vec3.scale(vec3.create(), avg, 1 / 3);
     avg = vec3.normalize(vec3.create(), avg);
     data.vertices.push(...p0, ...p1, ...p2);
     data.vertexNormals.push(...avg, ...avg, ...avg);
@@ -442,18 +441,10 @@ export function generateTetrahedron(radius = 1) {
     radius * -Math.sin(theta) * Math.sin(phi),
   ];
 
-  const p0 = vec3.scale(vec3.create(), [0, 1, 0], radius);
-  const p1 = vec3.scale(vec3.create(), angle2xyz(0, Math.PI - Math.atan(2 * Math.sqrt(2))), radius);
-  const p2 = vec3.scale(
-    vec3.create(),
-    angle2xyz((2 / 3) * Math.PI, Math.PI - Math.atan(2 * Math.sqrt(2))),
-    radius
-  );
-  const p3 = vec3.scale(
-    vec3.create(),
-    angle2xyz((4 / 3) * Math.PI, Math.PI - Math.atan(2 * Math.sqrt(2))),
-    radius
-  );
+  const p0 = [0, 1, 0];
+  const p1 = angle2xyz(0, Math.PI - Math.atan(2 * Math.sqrt(2)));
+  const p2 = angle2xyz((2 / 3) * Math.PI, Math.PI - Math.atan(2 * Math.sqrt(2)));
+  const p3 = angle2xyz((4 / 3) * Math.PI, Math.PI - Math.atan(2 * Math.sqrt(2)));
 
   addTri(p0, p1, p2);
   addTri(p0, p2, p3);
@@ -475,7 +466,6 @@ export function generateOctahedron(radius = 1) {
     var avg = vec3.add(vec3.create(), p0, p1);
     avg = vec3.add(vec3.create(), avg, p2);
     avg = vec3.scale(vec3.create(), avg, 1 / 3);
-    avg = vec3.normalize(vec3.create(), avg);
     data.vertices.push(...p0, ...p1, ...p2);
     data.vertexNormals.push(...avg, ...avg, ...avg);
   };
@@ -499,6 +489,148 @@ export function generateOctahedron(radius = 1) {
   return data;
 }
 
-export function generateDodecahedron(radius) {}
+export function generateDodecahedron(radius = 1) {
+  const data = {
+    vertices: [],
+    vertexNormals: [],
+    textures: [],
+    indices: [],
+  };
 
-export function generateIcosahedron(radius) {}
+  const addTri = (p0, p1, p2) => {
+    var avg = vec3.add(vec3.create(), p0, p1);
+    avg = vec3.add(vec3.create(), avg, p2);
+    avg = vec3.scale(vec3.create(), avg, 1 / 3);
+    avg = vec3.normalize(vec3.create(), avg);
+    data.vertices.push(...p0, ...p1, ...p2);
+    data.vertexNormals.push(...avg, ...avg, ...avg);
+  };
+
+  const addPentagon = (p0, p1, p2, p3, p4) => {
+    var avg = vec3.add(vec3.create(), p0, p1);
+    avg = vec3.add(vec3.create(), avg, p2);
+    avg = vec3.add(vec3.create(), avg, p3);
+    avg = vec3.add(vec3.create(), avg, p4);
+    avg = vec3.normalize(vec3.create(), avg);
+    data.vertices.push(...p0, ...p1, ...p2);
+    data.vertices.push(...p0, ...p2, ...p3);
+    data.vertices.push(...p0, ...p3, ...p4);
+    for (var i = 0; i < 9; i++) data.vertexNormals.push(...avg);
+  };
+
+  const angle2xyz = (theta, phi) => [
+    radius * Math.cos(theta) * Math.sin(phi),
+    radius * Math.cos(phi),
+    radius * -Math.sin(theta) * Math.sin(phi),
+  ];
+
+  const alpha = Math.acos(
+    (2 * Math.sqrt(25 + 11 * Math.sqrt(5))) / (Math.sqrt(10) * (Math.sqrt(3) + Math.sqrt(15)))
+  );
+  const beta = Math.asin(2 / (Math.sqrt(3) + Math.sqrt(15)));
+
+  const p01 = angle2xyz(0, alpha);
+  const p02 = angle2xyz((2 / 5) * Math.PI, alpha);
+  const p03 = angle2xyz((4 / 5) * Math.PI, alpha);
+  const p04 = angle2xyz((6 / 5) * Math.PI, alpha);
+  const p05 = angle2xyz((8 / 5) * Math.PI, alpha);
+
+  const p11 = angle2xyz(0, alpha + 2 * beta);
+  const p12 = angle2xyz((2 / 5) * Math.PI, alpha + 2 * beta);
+  const p13 = angle2xyz((4 / 5) * Math.PI, alpha + 2 * beta);
+  const p14 = angle2xyz((6 / 5) * Math.PI, alpha + 2 * beta);
+  const p15 = angle2xyz((8 / 5) * Math.PI, alpha + 2 * beta);
+
+  const p21 = angle2xyz((1 / 5) * Math.PI, Math.PI - alpha - 2 * beta);
+  const p22 = angle2xyz((3 / 5) * Math.PI, Math.PI - alpha - 2 * beta);
+  const p23 = angle2xyz((5 / 5) * Math.PI, Math.PI - alpha - 2 * beta);
+  const p24 = angle2xyz((7 / 5) * Math.PI, Math.PI - alpha - 2 * beta);
+  const p25 = angle2xyz((9 / 5) * Math.PI, Math.PI - alpha - 2 * beta);
+
+  const p31 = angle2xyz((1 / 5) * Math.PI, Math.PI - alpha);
+  const p32 = angle2xyz((3 / 5) * Math.PI, Math.PI - alpha);
+  const p33 = angle2xyz((5 / 5) * Math.PI, Math.PI - alpha);
+  const p34 = angle2xyz((7 / 5) * Math.PI, Math.PI - alpha);
+  const p35 = angle2xyz((9 / 5) * Math.PI, Math.PI - alpha);
+
+  addPentagon(p01, p02, p03, p04, p05);
+  addPentagon(p01, p11, p21, p12, p02);
+  addPentagon(p02, p12, p22, p13, p03);
+  addPentagon(p03, p13, p23, p14, p04);
+  addPentagon(p04, p14, p24, p15, p05);
+  addPentagon(p05, p15, p25, p11, p01);
+
+  addPentagon(p35, p34, p33, p32, p31);
+  addPentagon(p35, p25, p15, p24, p34);
+  addPentagon(p34, p24, p14, p23, p33);
+  addPentagon(p33, p23, p13, p22, p32);
+  addPentagon(p32, p22, p12, p21, p31);
+  addPentagon(p31, p21, p11, p25, p35);
+
+  return data;
+}
+
+export function generateIcosahedron(radius = 1) {
+  const data = {
+    vertices: [],
+    vertexNormals: [],
+    textures: [],
+    indices: [],
+  };
+
+  const addTri = (p0, p1, p2) => {
+    var avg = vec3.add(vec3.create(), p0, p1);
+    avg = vec3.add(vec3.create(), avg, p2);
+    avg = vec3.scale(vec3.create(), avg, 1 / 3);
+    data.vertices.push(...p0, ...p1, ...p2);
+    data.vertexNormals.push(...avg, ...avg, ...avg);
+  };
+
+  const angle2xyz = (theta, phi) => [
+    radius * Math.cos(theta) * Math.sin(phi),
+    radius * Math.cos(phi),
+    radius * -Math.sin(theta) * Math.sin(phi),
+  ];
+
+  const alpha = 2 * Math.asin(Math.sqrt(2) / Math.sqrt(5 + Math.sqrt(5)));
+
+  const p00 = [0, radius, 0];
+  const p01 = angle2xyz(0, alpha);
+  const p02 = angle2xyz((2 / 5) * Math.PI, alpha);
+  const p03 = angle2xyz((4 / 5) * Math.PI, alpha);
+  const p04 = angle2xyz((6 / 5) * Math.PI, alpha);
+  const p05 = angle2xyz((8 / 5) * Math.PI, alpha);
+
+  const p10 = [0, -radius, 0];
+  const p11 = angle2xyz((1 / 5) * Math.PI, Math.PI - alpha);
+  const p12 = angle2xyz((3 / 5) * Math.PI, Math.PI - alpha);
+  const p13 = angle2xyz((5 / 5) * Math.PI, Math.PI - alpha);
+  const p14 = angle2xyz((7 / 5) * Math.PI, Math.PI - alpha);
+  const p15 = angle2xyz((9 / 5) * Math.PI, Math.PI - alpha);
+
+  addTri(p00, p01, p02);
+  addTri(p00, p02, p03);
+  addTri(p00, p03, p04);
+  addTri(p00, p04, p05);
+  addTri(p00, p05, p01);
+
+  addTri(p10, p15, p14);
+  addTri(p10, p14, p13);
+  addTri(p10, p13, p12);
+  addTri(p10, p12, p11);
+  addTri(p10, p11, p15);
+
+  addTri(p01, p11, p02);
+  addTri(p02, p12, p03);
+  addTri(p03, p13, p04);
+  addTri(p04, p14, p05);
+  addTri(p05, p15, p01);
+
+  addTri(p11, p12, p02);
+  addTri(p12, p13, p03);
+  addTri(p13, p14, p04);
+  addTri(p14, p15, p05);
+  addTri(p15, p11, p01);
+
+  return data;
+}

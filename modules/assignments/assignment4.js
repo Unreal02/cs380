@@ -24,6 +24,8 @@ import {
   generateUpperBody,
   generateTetrahedron,
   generateOctahedron,
+  generateDodecahedron,
+  generateIcosahedron,
 } from "../cs380/primitives.js";
 import * as pose from "./assignment2_pose.js";
 
@@ -788,18 +790,47 @@ class MyPolyhedrons {
       generateCube(2 / Math.sqrt(3), 2 / Math.sqrt(3), 2 / Math.sqrt(3))
     );
     const octahedronMesh = cs380.Mesh.fromData(generateOctahedron());
+    const dodecahedronMesh = cs380.Mesh.fromData(generateDodecahedron());
+    const icosahedronMesh = cs380.Mesh.fromData(generateIcosahedron());
     this.thingsToClear.push(tetrahedronMesh, octahedronMesh);
 
-    this.tetrahedron = new cs380.RenderObject(tetrahedronMesh, shader);
-    this.tetrahedron.transform.localPosition = [-6, -3, 6];
+    this.tetrahedron1 = new cs380.RenderObject(tetrahedronMesh, shader);
+    this.tetrahedron1.transform.localPosition = [-6, -3, 6];
+    this.tetrahedron2 = new cs380.RenderObject(tetrahedronMesh, shader);
+    this.tetrahedron2.transform.localPosition = [6, -3, 6];
 
-    this.cube = new cs380.RenderObject(cubeMesh, shader);
-    this.cube.transform.localPosition = [-6, -1.5, 3];
+    this.cube1 = new cs380.RenderObject(cubeMesh, shader);
+    this.cube1.transform.localPosition = [-6, -2.5, 3];
+    this.cube2 = new cs380.RenderObject(cubeMesh, shader);
+    this.cube2.transform.localPosition = [6, -2.5, 3];
 
-    this.octahedron = new cs380.RenderObject(octahedronMesh, shader);
-    this.octahedron.transform.localPosition = [-6, 0, 0];
+    this.octahedron1 = new cs380.RenderObject(octahedronMesh, shader);
+    this.octahedron1.transform.localPosition = [-6, -2, 0];
+    this.octahedron2 = new cs380.RenderObject(octahedronMesh, shader);
+    this.octahedron2.transform.localPosition = [6, -2, 0];
 
-    this.objects = [this.tetrahedron, this.cube, this.octahedron];
+    this.dodecahedron1 = new cs380.RenderObject(dodecahedronMesh, shader);
+    this.dodecahedron1.transform.localPosition = [-6, -1.5, -3];
+    this.dodecahedron2 = new cs380.RenderObject(dodecahedronMesh, shader);
+    this.dodecahedron2.transform.localPosition = [6, -1.5, -3];
+
+    this.icosahedron1 = new cs380.RenderObject(icosahedronMesh, shader);
+    this.icosahedron1.transform.localPosition = [-6, -1, -6];
+    this.icosahedron2 = new cs380.RenderObject(icosahedronMesh, shader);
+    this.icosahedron2.transform.localPosition = [6, -1, -6];
+
+    this.objects = [
+      this.tetrahedron1,
+      this.tetrahedron2,
+      this.cube1,
+      this.cube2,
+      this.octahedron1,
+      this.octahedron2,
+      this.dodecahedron1,
+      this.dodecahedron2,
+      this.icosahedron1,
+      this.icosahedron2,
+    ];
     this.objects.forEach((i) => (i.transform.localScale = [1.5, 1.5, 1.5]));
 
     this.setMaterial(whiteMaterial);
@@ -822,6 +853,11 @@ class MyPolyhedrons {
 
   setMaterial(material) {
     this.objects.forEach((i) => (i.uniforms.material = material));
+  }
+
+  setRotation(val) {
+    const vector = vec3.scale(vec3.create(), [0, 1, 0], Math.sin(val));
+    this.objects.forEach((i) => (i.transform.localRotation = [...vector, Math.cos(val)]));
   }
 }
 
@@ -1194,6 +1230,7 @@ export default class Assignment4 extends cs380.BaseApp {
     this.tree.draw(12, angle, [1, -2.1, 0], [1.4, -2, 0]);
     this.dragon.update(elapsed);
     this.avatar.update(dt);
+    this.polyhedrons.setRotation(elapsed);
 
     // OPTIONAL: render PickableObject to the picking buffer here
 
