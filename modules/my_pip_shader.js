@@ -28,6 +28,11 @@ export class MyPipShader extends cs380.BaseShader {
       width: gl.getUniformLocation(this.program, "width"),
       height: gl.getUniformLocation(this.program, "height"),
       cameraEffect: gl.getUniformLocation(this.program, "cameraEffect"),
+
+      blurSigma: gl.getUniformLocation(this.program, "blurSigma"),
+      chromatic: gl.getUniformLocation(this.program, "chromatic"),
+      focalLength: gl.getUniformLocation(this.program, "focalLength"),
+      dof: gl.getUniformLocation(this.program, "dof"),
     };
   }
 
@@ -46,5 +51,10 @@ export class MyPipShader extends cs380.BaseShader {
     this.setUniformFloat(kv, "width", 0);
     this.setUniformFloat(kv, "height", 0);
     this.setUniformInt(kv, "cameraEffect", 0);
+
+    this.setUniformFloat(kv, "blurSigma", 3);
+    this.setUniformFloat(kv, "chromatic", 0.01);
+    this.setUniformFloat(kv, "focalLength", 30);
+    this.setUniformFloat(kv, "dof", 2);
   }
 }

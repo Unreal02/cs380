@@ -991,6 +991,10 @@ export default class Assignment4 extends cs380.BaseApp {
     this.pip = new Pip();
     await this.pip.initialize(width, height, [0, 0, 0], [2, 2, 2]);
     this.pip.image.uniforms.cameraEffect = CameraEffect.NONE;
+    this.pip.image.uniforms.blurSigma = 3;
+    this.pip.image.uniforms.chromatic = 0.01;
+    this.pip.image.uniforms.focalLength = 30;
+    this.pip.image.uniforms.dof = 2;
     this.thingsToClear.push(
       this.background,
       this.colorPlane,
@@ -1055,18 +1059,37 @@ export default class Assignment4 extends cs380.BaseApp {
         <option value=5>Chromatic Aberration</option>
         <option value=6>Depth of Field</option>
       </select>
-      <br><br>
 
-      <!-- OPTIONAL: Add more UI elements here --> 
+      <!-- OPTIONAL: Add more UI elements here -->
 
-      <label for="perlin">Perlin Noise</label>
-      <input type="checkbox" id="perlin">
-      &nbsp;
-      <label for="toon">Toon Shading</label>
-      <input type="checkbox" id="toon">
-      &nbsp;
-      <label for="arcball">Rotate Polyhedrons</label>
-      <input type="checkbox" id="arcball">
+      <table>
+        <tr align="right">
+          <td>
+            <label for="blur">Blur</label>
+            <input type="range" min=0.01 max=10 value=3 step=0.01 id="blur">
+            <br>
+            <label for="chromatic">Chromatic Aberration</label>
+            <input type="range" min=0 max=0.1 value=0.01 step=0.001 id="chromatic">
+          </td>
+          <td>
+            <label for="focal-length">&nbsp;&nbsp;&nbsp;Focal Length</label>
+            <input type="range" min=20 max=40 value=30 step=0.01 id="focal-length">
+            <br>
+            <label for="dof">&nbsp;&nbsp;&nbsp;Depth of Field</label>
+            <input type="range" min=0 max=10 value=2 step=0.01 id="dof">
+          </td>
+          <td>
+            <label for="perlin">&nbsp;&nbsp;&nbsp;Perlin Noise</label>
+            <input type="checkbox" id="perlin">
+            <br>
+            <label for="toon">&nbsp;&nbsp;&nbsp;Toon Shading</label>
+            <input type="checkbox" id="toon">
+            <br>
+            <label for="arcball">&nbsp;&nbsp;&nbsp;Rotate Polyhedrons</label>
+            <input type="checkbox" id="arcball">
+          </td>
+        </tr>
+      </table>
 
       <!-- light settings -->
       <table>
@@ -1112,6 +1135,19 @@ export default class Assignment4 extends cs380.BaseApp {
       Implement creative camera effects for your virtual camera booth. <br/>
       <strong>Have fun!</strong>
     `;
+
+    cs380.utils.setInputBehavior("blur", (val) => {
+      this.blurSigma = val;
+    });
+    cs380.utils.setInputBehavior("chromatic", (val) => {
+      this.chromatic = val;
+    });
+    cs380.utils.setInputBehavior("focal-length", (val) => {
+      this.focalLength = val;
+    });
+    cs380.utils.setInputBehavior("dof", (val) => {
+      this.dof = val;
+    });
 
     cs380.utils.setInputBehavior("light0-illuminance", (val) => {
       this.lights[0].illuminance = [val, val, val];
@@ -1410,6 +1446,10 @@ export default class Assignment4 extends cs380.BaseApp {
       gl.viewport(0, 0, width, height);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       this.pip.image.uniforms.cameraEffect = this.cameraEffect;
+      this.pip.image.uniforms.blurSigma = this.blurSigma;
+      this.pip.image.uniforms.chromatic = this.chromatic;
+      this.pip.image.uniforms.focalLength = this.focalLength;
+      this.pip.image.uniforms.dof = this.dof;
       this.pip.render(this.camera);
     }
   }

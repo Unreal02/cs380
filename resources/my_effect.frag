@@ -20,6 +20,11 @@ uniform float width;
 uniform float height;
 uniform int cameraEffect;
 
+uniform float blurSigma;
+uniform float chromatic;
+uniform float focalLength;
+uniform float dof;
+
 float gaussian(int x, int y, float sigma) {
   return exp(-(pow(float(x), 2.0) + pow(float(y), 2.0)) / pow(sigma, 2.0)) / pow(sigma, 2.0);
 }
@@ -27,7 +32,7 @@ float gaussian(int x, int y, float sigma) {
 float get_depth(vec2 pos) {
   vec3 depth_vector = texture(depthTexture, pos).rgb * 20.0;
   float temp = depth_vector.r + depth_vector.g + depth_vector.b;
-  return (temp - 30.0) / 6.0 + 30.0;
+  return -((temp - 30.0) / 2.0 - 30.0);
 }
 
 vec3 blur(float sigma) {
@@ -43,7 +48,7 @@ vec3 blur(float sigma) {
   for (int i = -range; i <= range; i++) for (int j = -range; j <= range; j++) {
     float coeff = gaussian(i, j, sigma);
     vec2 pos = uv + vec2(w * float(i), h * float(j));
-    if (cameraEffect == DEPTH_OF_FIELD && get_depth(uv) < get_depth(pos)) continue;
+    if (cameraEffect == DEPTH_OF_FIELD && get_depth(uv) > get_depth(pos)) continue;
     sum += coeff;
     avg += coeff * texture(mainTexture, pos).rgb;
   }
@@ -66,12 +71,12 @@ void main() {
       output_color.rgb = vec3(gray);
       break;
     case BLUR:
-      output_color.rgb = blur(3.0);
+      output_color.rgb = blur(blurSigma);
       break;
     case FISHEYE:
       vec2 center = vec2(width / 2.0, height / 2.0);
       vec2 from_center = uv * width - center; // (-width/2 ~ width/2)
-      float center_dist = length(from_center); // (0 ~ width/2)
+      float center_dist = length(from_center / 1.5); // (0 ~ width/2)
       float optical_angle = center_dist / (width / 2.0) * 1.5707963; // (0 ~ PI/2)
       float cam_angle = 80.0 * 3.1415926 / 180.0;
       if(optical_angle < cam_angle) {
@@ -83,16 +88,15 @@ void main() {
     case CHROMATIC_ABERRATION:
       vec2 uv_from_center = uv - vec2(0.5);
       output_color.rgb = vec3(
-        texture(mainTexture, 0.99 * uv_from_center + vec2(0.5)).r,
+        texture(mainTexture, (1.0 - chromatic) * uv_from_center + vec2(0.5)).r,
         texture(mainTexture, uv).g,
-        texture(mainTexture, 1.01 * uv_from_center + vec2(0.5)).b
+        texture(mainTexture, (1.0 + chromatic) * uv_from_center + vec2(0.5)).b
       );
       break;
     case DEPTH_OF_FIELD:
       float depth = get_depth(uv);
-      float focal_length = 30.0;
-      if (abs(focal_length - depth) <= 1.0) output_color.rgb = texture(mainTexture, uv).rgb;
-      else output_color.rgb = blur(min((abs(focal_length - depth) - 1.0), 5.0));
+      if (abs(focalLength - depth) <= dof / 2.0) output_color.rgb = texture(mainTexture, uv).rgb;
+      else output_color.rgb = blur(min((abs(focalLength - depth) - dof / 2.0), 10.0));
       break;
   }
 }

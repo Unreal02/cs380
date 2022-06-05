@@ -12,7 +12,7 @@ out vec4 output_color;
 
 void main() {
     float range = 60.0;
-    float depth = (frag_pos.z + 30.0) * 6.0 + 30.0;
+    float depth = (frag_pos.z + 30.0) * 2.0 + 30.0; // 15 ~ 45
     output_color = vec4(0, 0, 0, 1);
     output_color.r = depth / (range / 3.0);
     if (depth >= range / 3.0) output_color.g = (depth - range / 3.0) / (range / 3.0);
