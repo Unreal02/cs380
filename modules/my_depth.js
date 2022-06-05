@@ -5,17 +5,6 @@ import { vec3, vec4 } from "./cs380/gl-matrix.js";
 import * as cs380 from "./cs380/cs380.js";
 import { LightType, Light } from "./blinn_phong.js";
 
-export class Material {
-  constructor(color = [1, 1, 1]) {
-    this.ambientColor = color;
-    this.diffuseColor = color;
-    this.specularColor = color;
-    this.shininess = 100;
-    this.toon = false;
-    this.perlin = false;
-  }
-}
-
 export class MyDepthShader extends cs380.BaseShader {
   static get source() {
     // Define shader codes here

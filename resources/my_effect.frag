@@ -24,6 +24,12 @@ float gaussian(int x, int y, float sigma) {
   return exp(-(pow(float(x), 2.0) + pow(float(y), 2.0)) / pow(sigma, 2.0)) / pow(sigma, 2.0);
 }
 
+float get_depth(vec2 pos) {
+  vec3 depth_vector = texture(depthTexture, pos).rgb * 20.0;
+  float temp = depth_vector.r + depth_vector.g + depth_vector.b;
+  return (temp - 30.0) / 6.0 + 30.0;
+}
+
 vec3 blur(float sigma) {
   float w = 1.0 / width; //interval of u between two fragments pixel
   float h = 1.0 / height; //interval of v between two fragments pixel
@@ -36,8 +42,10 @@ vec3 blur(float sigma) {
   }
   for (int i = -range; i <= range; i++) for (int j = -range; j <= range; j++) {
     float coeff = gaussian(i, j, sigma);
+    vec2 pos = uv + vec2(w * float(i), h * float(j));
+    if (cameraEffect == DEPTH_OF_FIELD && get_depth(uv) < get_depth(pos)) continue;
     sum += coeff;
-    avg += coeff * texture(mainTexture, uv + vec2(w * float(i), h * float(j))).rgb;
+    avg += coeff * texture(mainTexture, pos).rgb;
   }
   avg /= sum;
   return avg;
@@ -81,10 +89,10 @@ void main() {
       );
       break;
     case DEPTH_OF_FIELD:
-      vec3 depth_vector = texture(depthTexture, uv).rgb;
-      float depth = depth_vector.r * 25.0 + depth_vector.g * 25.0 + depth_vector.b * 25.0;
-      if (abs(30.0 - depth) < 1.0) output_color.rgb = texture(mainTexture, uv).rgb;
-      else output_color.rgb = blur((abs(30.0 - depth) - 1.0) / 3.0);
+      float depth = get_depth(uv);
+      float focal_length = 30.0;
+      if (abs(focal_length - depth) <= 1.0) output_color.rgb = texture(mainTexture, uv).rgb;
+      else output_color.rgb = blur(min((abs(focal_length - depth) - 1.0), 5.0));
       break;
   }
 }

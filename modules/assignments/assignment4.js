@@ -837,7 +837,6 @@ class MyPolyhedrons {
   }
 
   render(cam, shader) {
-    var asdf = 0;
     this.objects.forEach((i) => i.render(cam, shader));
   }
 
