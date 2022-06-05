@@ -721,6 +721,10 @@ class MyAvatar {
     }
   }
 
+  renderPicking(cam) {
+    this.avatarList.forEach((i) => i.renderPicking(cam));
+  }
+
   render(cam, shader) {
     this.avatarList.forEach((i) => i.render(cam, shader));
   }
@@ -1266,6 +1270,7 @@ export default class Assignment4 extends cs380.BaseApp {
   onMouseDown(e) {
     this.mousePressed = true;
 
+    // arcball
     const { left, bottom } = gl.canvas.getBoundingClientRect();
     const x = e.clientX - left;
     const y = bottom - e.clientY;
@@ -1273,6 +1278,19 @@ export default class Assignment4 extends cs380.BaseApp {
     var y0 = (y - 400) / 400;
     this.prevArcballVector = this.xy2ArcballVec(x0, y0);
     this.prevArcballQ = this.polyhedrons.getRotation();
+
+    // picking
+    const index = this.pickingBuffer.pick(x, y);
+    console.log(`click ${index}`);
+    if (this.avatar.nextPoseList.length == 0 && index == 1) {
+      this.avatar.setLegLDPivot();
+      this.avatar.nextPoseList.push(
+        { pose: pose.jumpReady, interval: 0.5, lerpFunc: (x) => x },
+        { pose: pose.jump, interval: 0.5, lerpFunc: (x) => x * (2 - x) },
+        { pose: pose.jumpReady, interval: 0.5, lerpFunc: (x) => x * x },
+        { pose: pose.idle, interval: 0.5, lerpFunc: (x) => x }
+      );
+    }
   }
 
   onMouseUp(e) {
@@ -1314,6 +1332,13 @@ export default class Assignment4 extends cs380.BaseApp {
     this.avatar.update(dt);
 
     // OPTIONAL: render PickableObject to the picking buffer here
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.pickingBuffer.fbo);
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    gl.clearDepth(1.0);
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LEQUAL);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    this.avatar.renderPicking(this.camera);
 
     // Render effect-applied scene to framebuffer of the photo if shutter is pressed
     if (this.shutterPressed) {
