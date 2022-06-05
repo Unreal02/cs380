@@ -1061,8 +1061,10 @@ export default class Assignment4 extends cs380.BaseApp {
 
       <label for="perlin">Perlin Noise</label>
       <input type="checkbox" id="perlin">
+      &nbsp;
       <label for="toon">Toon Shading</label>
       <input type="checkbox" id="toon">
+      &nbsp;
       <label for="arcball">Rotate Polyhedrons</label>
       <input type="checkbox" id="arcball">
 
