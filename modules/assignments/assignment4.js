@@ -854,9 +854,12 @@ class MyPolyhedrons {
     this.objects.forEach((i) => (i.uniforms.material = material));
   }
 
+  getRotation() {
+    return this.tetrahedron1.transform.localRotation;
+  }
+
   setRotation(val) {
-    const vector = vec3.scale(vec3.create(), [0, 1, 0], Math.sin(val));
-    this.objects.forEach((i) => (i.transform.localRotation = [...vector, Math.cos(val)]));
+    this.objects.forEach((i) => (i.transform.localRotation = val));
   }
 }
 
@@ -1022,6 +1025,7 @@ export default class Assignment4 extends cs380.BaseApp {
       this.onMouseMove(e);
     };
     this.mousePressed = false;
+    this.arcballEnabled = false;
 
     document.addEventListener("keydown", this.handleKeyDown);
     document.addEventListener("keyup", this.handleKeyUp);
@@ -1050,7 +1054,8 @@ export default class Assignment4 extends cs380.BaseApp {
         <option value=4>Fish-eye</option>
         <option value=5>Chromatic Aberration</option>
         <option value=6>Depth of Field</option>
-      </select> <br/>
+      </select>
+      <br><br>
 
       <!-- OPTIONAL: Add more UI elements here --> 
 
@@ -1058,6 +1063,8 @@ export default class Assignment4 extends cs380.BaseApp {
       <input type="checkbox" id="perlin">
       <label for="toon">Toon Shading</label>
       <input type="checkbox" id="toon">
+      <label for="arcball">Rotate Polyhedrons</label>
+      <input type="checkbox" id="arcball">
 
       <!-- light settings -->
       <table>
@@ -1127,6 +1134,9 @@ export default class Assignment4 extends cs380.BaseApp {
     });
     cs380.utils.setCheckboxBehavior("toon", (val) => {
       this.avatar.setToon(val);
+    });
+    cs380.utils.setCheckboxBehavior("arcball", (val) => {
+      this.arcballEnabled = val;
     });
 
     const shutterAudio = document.getElementById("shutter-sfx");
@@ -1208,11 +1218,46 @@ export default class Assignment4 extends cs380.BaseApp {
     }
   }
 
-  onMouseDown(e) {}
+  xy2ArcballVec(x, y) {
+    var z;
+    if (x * x + y * y >= 1) z = 0;
+    else z = Math.sqrt(1 - x * x - y * y);
+    return vec3.normalize(vec3.create(), [x, y, z]);
+  }
 
-  onMouseUp(e) {}
+  onMouseDown(e) {
+    this.mousePressed = true;
 
-  onMouseMove(e) {}
+    const { left, bottom } = gl.canvas.getBoundingClientRect();
+    const x = e.clientX - left;
+    const y = bottom - e.clientY;
+    var x0 = (x - 400) / 400;
+    var y0 = (y - 400) / 400;
+    this.prevArcballVector = this.xy2ArcballVec(x0, y0);
+    this.prevArcballQ = this.polyhedrons.getRotation();
+  }
+
+  onMouseUp(e) {
+    this.mousePressed = false;
+  }
+
+  onMouseMove(e) {
+    if (!this.mousePressed || !this.arcballEnabled) return;
+
+    const { left, bottom } = gl.canvas.getBoundingClientRect();
+
+    var x = (e.clientX - left - 400) / 400;
+    var y = (bottom - e.clientY - 400) / 400;
+    var v1 = this.prevArcballVector;
+    var v2 = this.xy2ArcballVec(x, y);
+
+    var q1 = quat.scale(quat.create(), [...v1, 0], -1);
+    var q2 = [...v2, 0];
+
+    this.polyhedrons.setRotation(
+      quat.mul(quat.create(), quat.mul(quat.create(), q2, q1), this.prevArcballQ)
+    );
+  }
 
   finalize() {
     // Finalize WebGL objects (mesh, shader, texture, ...)
@@ -1223,13 +1268,12 @@ export default class Assignment4 extends cs380.BaseApp {
 
   update(elapsed, dt) {
     // TODO: Update objects here
-    this.simpleOrbitControl.update(dt);
+    if (!this.arcballEnabled) this.simpleOrbitControl.update(dt);
     var angle = (Math.sin(elapsed) * Math.PI) / 4;
     if (angle < 0) angle += Math.PI / 2;
     this.tree.draw(12, angle, [1, -2.1, 0], [1.4, -2, 0]);
     this.dragon.update(elapsed);
     this.avatar.update(dt);
-    this.polyhedrons.setRotation(elapsed);
 
     // OPTIONAL: render PickableObject to the picking buffer here
 
