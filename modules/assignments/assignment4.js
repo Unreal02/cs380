@@ -92,7 +92,7 @@ class Pip {
     this.framebuffer.initialize(width, height);
 
     this.bigBuffer = new Framebuffer();
-    this.bigBuffer.initialize(width * 5, height * 5);
+    this.bigBuffer.initialize(width * 8, height * 8);
 
     this.depthBuffer = new Framebuffer();
     this.depthBuffer.initialize(width, height);
@@ -1441,7 +1441,7 @@ export default class Assignment4 extends cs380.BaseApp {
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.pip.framebuffer.fbo);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.pip.bigBuffer.fbo);
-        gl.viewport(0, 0, width * 5, height * 5);
+        gl.viewport(0, 0, width * 8, height * 8);
       } else {
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.pip.bigBuffer.fbo);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
