@@ -41,7 +41,7 @@ vec3 blur(float sigma) {
   vec3 avg = vec3(0);
   float sum = 0.0;
   int range;
-  for (int i = 0; ; i++) if (exp(-pow(float(i), 2.0) / pow(sigma, 2.0)) < 0.01) {
+  for (int i = 0; ; i++) if (exp(-pow(float(i), 2.0) / pow(sigma, 2.0)) < 0.005) {
     range = i;
     break;
   }
