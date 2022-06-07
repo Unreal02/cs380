@@ -477,6 +477,8 @@ class MyDragon {
         vec3.add(p4, middle, vec3.sub(vec3.create(), middle, p2));
         this.meshes[idx].addVertexData(...p1, ...color, ...p2, ...color, ...p3, ...color);
         this.meshes[idx].addVertexData(...p1, ...color, ...p3, ...color, ...p4, ...color);
+        this.meshes[idx].addVertexData(...p1, ...color, ...p3, ...color, ...p2, ...color);
+        this.meshes[idx].addVertexData(...p1, ...color, ...p4, ...color, ...p3, ...color);
       }
     };
 
@@ -804,24 +806,24 @@ class MyPolyhedrons {
     this.tetrahedron2.transform.localPosition = [6, -3, 6];
 
     this.cube1 = new cs380.RenderObject(cubeMesh, shader);
-    this.cube1.transform.localPosition = [-6, -2.5, 3];
+    this.cube1.transform.localPosition = [-6, -2, 3];
     this.cube2 = new cs380.RenderObject(cubeMesh, shader);
-    this.cube2.transform.localPosition = [6, -2.5, 3];
+    this.cube2.transform.localPosition = [6, -2, 3];
 
     this.octahedron1 = new cs380.RenderObject(octahedronMesh, shader);
-    this.octahedron1.transform.localPosition = [-6, -2, 0];
+    this.octahedron1.transform.localPosition = [-6, -1, 0];
     this.octahedron2 = new cs380.RenderObject(octahedronMesh, shader);
-    this.octahedron2.transform.localPosition = [6, -2, 0];
+    this.octahedron2.transform.localPosition = [6, -1, 0];
 
     this.dodecahedron1 = new cs380.RenderObject(dodecahedronMesh, shader);
-    this.dodecahedron1.transform.localPosition = [-6, -1.5, -3];
+    this.dodecahedron1.transform.localPosition = [-6, 0, -3];
     this.dodecahedron2 = new cs380.RenderObject(dodecahedronMesh, shader);
-    this.dodecahedron2.transform.localPosition = [6, -1.5, -3];
+    this.dodecahedron2.transform.localPosition = [6, -0, -3];
 
     this.icosahedron1 = new cs380.RenderObject(icosahedronMesh, shader);
-    this.icosahedron1.transform.localPosition = [-6, -1, -6];
+    this.icosahedron1.transform.localPosition = [-6, 1, -6];
     this.icosahedron2 = new cs380.RenderObject(icosahedronMesh, shader);
-    this.icosahedron2.transform.localPosition = [6, -1, -6];
+    this.icosahedron2.transform.localPosition = [6, 1, -6];
 
     this.objects = [
       this.tetrahedron1,
